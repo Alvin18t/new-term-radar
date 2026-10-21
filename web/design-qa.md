@@ -52,3 +52,22 @@ The 2026-10-21 multi-source iteration added the evidence gate, keyword verificat
 
 latest result: build and static checks passed; fresh browser recapture unavailable
 
+
+## 2026-10-21 premium visual update
+
+- Goal: keep the information architecture and interaction behavior unchanged while moving the visual system toward a warmer, higher-contrast paper texture with copper accents.
+- Updated design tokens: background `#f5f1ea`, surface `#fffcf7`, ink `#1d1b18`, muted `#6b645b`, line `#e3dbd0`, accent copper `#c0642c`, state colors tuned to match the new base.
+- Added layered background with a subtle 42px grid, warm gradient, and soft shadows for cards and panels.
+- Applied hover/focus micro-transitions to buttons, site list items, flow nodes, and focus rings.
+- Replaced the active nav underline from ink to copper and aligned chart, meter, and sparkline accents to the new palette.
+
+### Evidence
+
+- Desktop viewport 1229 × 900: `qa/visual-desktop.png`
+- Mobile viewport 390 × 844: `qa/visual-mobile.png`
+- Overflow measurements: desktop scrollWidth 1229, clientWidth 1229; mobile scrollWidth 390, clientWidth 390. No horizontal overflow at either breakpoint.
+- Build: `npm run build` passed.
+- Sites packaging tests: `npm run test:sites`, 4/4 passed.
+- Interaction behavior unchanged; only CSS tokens and surface treatment were adjusted.
+
+latest result: premium visual update passed build, packaging tests, and desktop/mobile overflow checks
