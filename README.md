@@ -345,7 +345,7 @@ Point `RADAR_STATE` at the directory your scheduled runs write to and `recent_le
 
 1. Fork the repository (a private fork is fine).
 2. Remove `config.json` from `.gitignore` and commit your config. It holds no secrets.
-3. Add the secret `AISA_API_KEY`; optionally `GOANYAPI_API_KEY`, `RESEND_API_KEY`, `EMAIL_FROM`, `RADAR_EMAIL_TO`, `GSC_TOKEN_JSON`.
+3. Add the secret `AISA_API_KEY`; optionally `GOANYAPI_API_KEY`, `AHREFS_API_KEY`, `SEMRUSH_API_KEY`, `SIMILARWEB_API_KEY`, `RESEND_API_KEY`, `EMAIL_FROM`, `RADAR_EMAIL_TO`, `GSC_TOKEN_JSON`. You can configure just one direct provider; providers without a credential remain marked as pending credentials.
 4. Set the repository variable `RADAR_ENABLED` to `true`.
 
 ## How the pieces decide
