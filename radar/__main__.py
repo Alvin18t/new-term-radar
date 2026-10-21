@@ -42,7 +42,7 @@ import sys
 from datetime import date
 from pathlib import Path
 
-from . import asks, breakout, config, gsc, new_sites, notify, pains, report, review, revenue, seller_history, sellers, sitemaps, sources, store, usecases
+from . import asks, breakout, config, gsc, new_sites, notify, pains, providers, report, review, revenue, seller_history, sellers, sitemaps, sources, store, usecases
 from .i18n import t
 
 SKIPPABLE = {"x", "hf", "breakout", "sitemaps", "newsites", "revenue", "asks", "sellers", "gsc", "review", "judge", "usecases", "tutorials"}
@@ -202,7 +202,7 @@ def main(argv: list[str] | None = None) -> int:
         return serve_mcp()
     prog = "python -m radar" if __package__ == "radar" else "new-term-radar"  # installed, the package has another name
     p = argparse.ArgumentParser(prog=prog, description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("command", choices=["daily", "sources", "keywords", "leads", "pains", "history"])
+    p.add_argument("command", choices=["daily", "sources", "keywords", "leads", "pains", "history", "providers"])
     p.add_argument("names", nargs="*", help="for `keywords`: the names to read; for `history`: pull, read, sort or report")
     p.add_argument("--repo", action="append", default=[], metavar="NAME=OWNER/REPO", help="for `keywords`: a name's GitHub repository")
     p.add_argument("--days", type=int, default=7, help="for `leads`: how far back")
@@ -226,6 +226,11 @@ def main(argv: list[str] | None = None) -> int:
     if unknown:
         p.error(f"--skip: unknown {sorted(unknown)}")
     state = Path(args.state)
+    if args.command == "providers":
+        rows = providers.status()
+        print(json.dumps(rows, ensure_ascii=False, indent=1) if args.json else "\n".join(
+            f"{r['provider']}: adapter {r['adapter']}, credential {r['credential']} ({r['env']}) · {r['capabilities']}" for r in rows))
+        return 0
     if args.command == "leads":
         return cmd_leads(args, state)
     if args.command == "keywords" and not args.names:

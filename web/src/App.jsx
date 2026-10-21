@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowClockwise, ArrowRight, Bell, BookOpenText, Broadcast, Buildings,
   CaretDown, CaretRight, ChartLineUp, Check, CheckCircle, CircleNotch,
@@ -49,8 +49,9 @@ function MiniBars({ value = 70, tone = "red" }) {
   return <span className="mini-bars" aria-label={`机会强度 ${value}`}>{heights.map((height, index) => <i key={index} className={`mini-bars__bar mini-bars__bar--${tone}`} style={{ height: `${height}%` }} />)}</span>;
 }
 
-function verificationRows(word) {
+function verificationRows(word, providerStatus = []) {
   const trendLabel = word.trend === "rising" ? "持续上涨" : word.trend === "steady" ? "稳定需求" : "新出现，待沉淀";
+  const directState = (provider) => providerStatus.find((item) => item.provider === provider)?.credential === "configured" ? "可运行" : "待凭证";
   return [
     { dimension: "趋势", provider: "Google Trends", route: "AIsa / GoAnyAPI", value: `${trendLabel} · ${word.searchGrowth}`, state: "已校验" },
     { dimension: "需求规模", provider: "Google Ads", route: "DataForSEO 经 AIsa", value: `月搜约 ${(word.dailySearch * 30).toLocaleString()}`, state: "已校验" },
@@ -58,9 +59,9 @@ function verificationRows(word) {
     { dimension: "站点强度", provider: "Domain rating", route: "GoAnyAPI DR", value: word.weakResults === null ? "尚无结果域名" : "逐个评估首页域名", state: word.weakResults === null ? "待补" : "已校验" },
     { dimension: "供给 / 广告", provider: "Intitle + Ads", route: "GoAnyAPI", value: word.revenueSignal === "未知" ? "广告与页面供给待核对" : "检查新增页面与广告主", state: "部分" },
     { dimension: "商业验证", provider: "TrustMRR / 收款链接", route: "AIsa + 公开外链", value: `商业信号：${word.revenueSignal}`, state: word.revenueSignal === "未知" ? "待补" : "已校验" },
-    { dimension: "站点访问", provider: "Similarweb", route: "未直连；GoAnyAPI traffic 代理", value: "仅在候选站点阶段按需查询", state: "代理" },
-    { dimension: "第三方交叉", provider: "Ahrefs", route: "当前仓库未接入", value: "预留 KD / 流量潜力 / 反链适配器", state: "未接入" },
-    { dimension: "第三方交叉", provider: "Semrush", route: "当前仓库未接入", value: "预留意图 / CPC / SERP 适配器", state: "未接入" },
+    { dimension: "站点访问", provider: "Similarweb", route: "Batch API 适配器已就绪；无凭证时使用 GoAnyAPI traffic 代理", value: "入围词的首页域名按监控轮次异步补全", state: directState("Similarweb") },
+    { dimension: "第三方交叉", provider: "Ahrefs", route: "Keywords Explorer v3 · AHREFS_API_KEY", value: "KD / 流量潜力 / 父主题 / 点击", state: directState("Ahrefs") },
+    { dimension: "第三方交叉", provider: "Semrush", route: "Keyword Metrics v4 · SEMRUSH_API_KEY", value: "意图 / CPC / 付费密度 / KD / SERP", state: directState("Semrush") },
   ];
 }
 
@@ -256,13 +257,13 @@ function FlowPage() {
 
 function PageIntro({ eyebrow, title, detail, action }) { return <section className="page-intro"><div><p className="eyebrow">{eyebrow}</p><h1>{title}</h1><p>{detail}</p></div>{action}</section>; }
 
-function KeywordDrawer({ word, onClose, onDecision, onNavigate }) {
+function KeywordDrawer({ word, providerStatus, onClose, onDecision, onNavigate }) {
   const [tab, setTab] = useState("判断"); if (!word) return null;
   return (
     <div className="drawer-layer" role="dialog" aria-modal="true" aria-label={`${word.name} 机会详情`}><button className="drawer-backdrop" onClick={onClose} aria-label="关闭" /><aside className="drawer">
       <div className="drawer__header"><div><div className="drawer__chips"><Chip tone={word.type === "高价值老词" ? "gold" : "red"}>{word.type}</Chip><Chip>{word.format}</Chip></div><h2>{word.name}</h2><p>{word.alias} · {word.age}</p></div><button className="icon-button" onClick={onClose}><X size={20} /></button></div>
       <div className="drawer__score"><div><span>机会分</span><strong>{word.score}</strong></div><div><span>估算日搜</span><strong>{word.dailySearch.toLocaleString()}</strong><small>{word.searchGrowth}</small></div><div><span>首页竞争</span><strong>{word.competition}</strong><small>{word.weakResults === null ? "待抓取" : `${word.weakResults} 个弱结果`}</small></div><div><span>商业信号</span><strong>{word.revenueSignal}</strong></div></div>
-      <nav className="drawer-tabs">{["判断", "校验", "证据", "站点", "渠道"].map((item) => <button key={item} className={tab === item ? "active" : ""} onClick={() => setTab(item)}>{item}</button>)}</nav><div className="drawer__body">{tab === "判断" ? <JudgementPanel word={word} /> : null}{tab === "校验" ? <VerificationPanel word={word} /> : null}{tab === "证据" ? <EvidencePanel word={word} /> : null}{tab === "站点" ? <SitePanel word={word} onNavigate={onNavigate} /> : null}{tab === "渠道" ? <ChannelPanel word={word} onNavigate={onNavigate} /> : null}</div>
+      <nav className="drawer-tabs">{["判断", "校验", "证据", "站点", "渠道"].map((item) => <button key={item} className={tab === item ? "active" : ""} onClick={() => setTab(item)}>{item}</button>)}</nav><div className="drawer__body">{tab === "判断" ? <JudgementPanel word={word} /> : null}{tab === "校验" ? <VerificationPanel word={word} providerStatus={providerStatus} /> : null}{tab === "证据" ? <EvidencePanel word={word} /> : null}{tab === "站点" ? <SitePanel word={word} onNavigate={onNavigate} /> : null}{tab === "渠道" ? <ChannelPanel word={word} onNavigate={onNavigate} /> : null}</div>
       <div className="drawer__footer"><div><span>你的决定</span><select value={word.userDecision} onChange={(e) => onDecision(word.id, e.target.value)}>{decisionOptions.map((item) => <option key={item}>{item}</option>)}</select></div><Button variant="primary" icon={Check} onClick={() => onDecision(word.id, word.userDecision === "在做" ? "计划做" : "在做")}>{word.userDecision === "在做" ? "改为计划做" : "标记为在做"}</Button></div>
     </aside></div>
   );
@@ -270,9 +271,10 @@ function KeywordDrawer({ word, onClose, onDecision, onNavigate }) {
 
 function JudgementPanel({ word }) { return <div className="drawer-panel"><section><p className="panel-label">系统结论</p><div className="system-labels">{word.systemLabels.map((label) => <Chip key={label} tone={label === "高净值" ? "gold" : "green"} icon={label === "高净值" ? Heart : CheckCircle}>{label}</Chip>)}</div><p className="lead-copy">{word.summary}</p><p className="score-note"><CheckCircle size={15} />结论由需求、竞争、商业、可执行性和个人匹配共同生成；热度只表示检查时机。</p></section><section><p className="panel-label">为什么现在</p><ol className="reason-list">{word.whyNow.map((reason, index) => <li key={reason}><span>{index + 1}</span><p>{reason}</p></li>)}</ol></section><section><p className="panel-label">建议做法</p><div className="recommendation-box"><Sparkle size={20} weight="fill" /><p>{word.recommendation}</p></div></section><section><p className="panel-label">下一动作</p><div className="next-action-box"><Target size={20} /><p>{word.nextAction}</p></div></section></div>; }
 
-function VerificationPanel({ word }) {
-  const rows = verificationRows(word); const coverage = evidenceCoverage(word);
-  return <div className="drawer-panel verification-panel"><section><div className="verification-summary"><div><span>可用证据</span><strong>{coverage.ready}/{coverage.total}</strong></div><p>热度只触发检查，不直接产生“建议做”。至少要有需求、竞争和商业证据中的两组，缺失与冲突必须显式显示。</p></div></section><section><p className="panel-label">多源交叉校验</p><div className="verification-table">{rows.map((row, index) => <article key={`${row.provider}-${index}`}><div><b>{row.dimension}</b><small>{row.provider}</small></div><div><span>{row.value}</span><small>{row.route}</small></div><Chip tone={row.state === "已校验" ? "green" : row.state === "部分" || row.state === "代理" ? "orange" : "neutral"}>{row.state}</Chip></article>)}</div></section><section className="evidence-warning"><WarningCircle size={20} /><p>Ahrefs、Semrush 与 Similarweb 在当前仓库中都不是直接关键词校验依赖。接入后应作为独立适配器和冲突检查，不能用一个综合平均数掩盖来源差异。</p></section></div>;
+function VerificationPanel({ word, providerStatus }) {
+  const rows = verificationRows(word, providerStatus); const coverage = evidenceCoverage(word);
+  const readyProviders = providerStatus.filter((item) => item.credential === "configured").map((item) => item.provider);
+  return <div className="drawer-panel verification-panel"><section><div className="verification-summary"><div><span>可用证据</span><strong>{coverage.ready}/{coverage.total}</strong></div><p>热度只触发检查，不直接产生“建议做”。需求、竞争与商业证据必须全部通过；直连供应商用于提高置信度和发现冲突。</p></div></section><section><p className="panel-label">多源交叉校验</p><div className="verification-table">{rows.map((row, index) => <article key={`${row.provider}-${index}`}><div><b>{row.dimension}</b><small>{row.provider}</small></div><div><span>{row.value}</span><small>{row.route}</small></div><Chip tone={row.state === "已校验" ? "green" : row.state === "可运行" ? "blue" : row.state === "部分" || row.state === "代理" || row.state === "待凭证" ? "orange" : "neutral"}>{row.state}</Chip></article>)}</div></section><section className="evidence-warning"><WarningCircle size={20} /><p>直连适配器已经完成。{readyProviders.length ? `${readyProviders.join("、")} 已具备本机凭证，可在下一轮真实监控中运行。` : "当前机器没有三家付费 API 凭证，因此准确显示“待凭证”。"}凭证只从本机环境变量读取，不进入前端或仓库。</p></section></div>;
 }
 
 function EvidencePanel({ word }) { return <div className="drawer-panel"><section><p className="panel-label">证据时间线</p><div className="evidence-list">{word.evidence.map((item, index) => <article key={`${item.source}-${index}`}><span><StatusDot tone={index === 0 ? "red" : "orange"} /></span><div><b>{item.source}</b><p>{item.note}</p><small>{item.time}</small></div></article>)}</div></section><section className="evidence-warning"><WarningCircle size={20} /><p>当前内容为可交互框架的演示数据。接入 `radar/store.py` 与运行结果后，证据将由真实来源和抓取时间填充。</p></section></div>; }
@@ -286,16 +288,20 @@ function PreferencesModal({ onClose, onSave }) {
   return <Modal title="个人偏好" subtitle="它只影响排序与建议，不改变原始市场信号。" onClose={onClose}><div className="form-section"><label>当前模式</label><div className="radio-cards"><button className={scope === "global" ? "active" : ""} onClick={() => setScope("global")}><Globe size={20} /><b>全局探索</b><span>不限制方向，寻找最快正反馈</span></button><button className={scope === "direction" ? "active" : ""} onClick={() => setScope("direction")}><Target size={20} /><b>方向聚焦</b><span>本阶段优先匹配选定方向</span></button></div></div><div className="form-section"><label>当前倾向</label><div className="choice-chips">{["工具站", "SEO", "快速验证", "内容站", "开发者工具", "教育产品", "订阅制"].map((item) => <button key={item} className={directions.includes(item) ? "active" : ""} onClick={() => toggle(item)}>{directions.includes(item) ? <Check size={14} /> : null}{item}</button>)}</div></div><div className="two-column-fields"><label>每周可投入<select defaultValue="10-15 小时"><option>5 小时以内</option><option>10-15 小时</option><option>20 小时以上</option></select></label><label>月工具预算<select defaultValue="$100 以内"><option>$30 以内</option><option>$100 以内</option><option>$300 以内</option></select></label></div><div className="form-section"><label>核心目标</label><textarea defaultValue="新手期，优先尽快获得正反馈和真实付费用户；市场不限，倾向工具站和 SEO，但由证据决定。" /></div><div className="modal-actions"><Button onClick={onClose}>取消</Button><Button variant="primary" icon={Check} onClick={() => onSave({ scope, directions })}>保存偏好</Button></div></Modal>;
 }
 
-function SystemModal({ onClose, onSave }) {
+function SystemModal({ providerStatus, onClose, onSave }) {
   const [advanced, setAdvanced] = useState(false);
-  const providers = [
-    ["DataForSEO · AIsa", "Trends / Ads / SERP / KD", "已接入", "green"],
-    ["GoAnyAPI", "DR / Intitle / Ads / Traffic", "已接入", "green"],
-    ["TrustMRR / 收款链接", "收入与付费证据", "已接入", "green"],
-    ["Similarweb", "当前仅有 traffic 代理", "未直连", "orange"],
-    ["Ahrefs", "KD / 流量潜力 / 反链", "未接入", "neutral"],
-    ["Semrush", "意图 / CPC / 关键词差距", "未接入", "neutral"],
+  const coreProviders = [
+    ["DataForSEO · AIsa", "Trends / Ads / SERP / KD", "适配器就绪", "green"],
+    ["GoAnyAPI", "DR / Intitle / Ads / Traffic", "适配器就绪", "green"],
+    ["TrustMRR / 收款链接", "收入与付费证据", "适配器就绪", "green"],
   ];
+  const directStatus = providerStatus.length ? providerStatus : [
+    { provider: "Ahrefs", capabilities: "KD / 流量潜力 / 父主题", credential: "missing" },
+    { provider: "Semrush", capabilities: "意图 / CPC / 付费密度", credential: "missing" },
+    { provider: "Similarweb", capabilities: "Batch API · 首页域名流量", credential: "missing" },
+  ];
+  const directProviders = directStatus.map((item) => [item.provider, item.capabilities, item.credential === "configured" ? "可运行" : "待凭证", item.credential === "configured" ? "green" : "orange"]);
+  const providers = [...coreProviders, ...directProviders];
   return <Modal title="系统与推理设置" subtitle="采集频率、数据源、成本上限和模型分工可以独立调整。" onClose={onClose} wide><div className="model-policy"><div><Sparkle size={22} weight="fill" /><div><span>深度机会判断</span><b>GPT-6 Astra · XHigh</b><small>只在多源证据齐全或人工要求时触发</small></div><Chip tone="gold">最强推理</Chip></div><div><Lightning size={22} /><div><span>日常分类与摘要</span><b>GPT-6.1 Sol · High</b><small>用于重复任务，控制延迟与成本</small></div><Chip tone="blue">默认</Chip></div></div><section className="provider-inventory"><div className="schedule-head"><div><h3>关键词校验数据源</h3><p>状态来自当前 GitHub 仓库代码，不把代理数据标成官方直连。</p></div></div><div>{providers.map(([name, use, state, tone]) => <article key={name}><span><b>{name}</b><small>{use}</small></span><Chip tone={tone}>{state}</Chip></article>)}</div></section><div className="schedule-head"><div><h3>刷新计划</h3><p>频率指后台采集；页面默认每分钟读取一次最新状态。</p></div><button className="text-link" onClick={() => setAdvanced(!advanced)}>{advanced ? "收起高级项" : "显示高级项"}<CaretDown size={14} /></button></div><div className="schedule-table">{sourceSchedules.filter((_, index) => advanced || index < 6).map((item) => <div key={item.source}><span><b>{item.source}</b><small>{item.kind} · {item.mode}</small></span><select defaultValue={item.frequency}><option>2 分钟</option><option>5 分钟</option><option>15 分钟</option><option>1 小时</option><option>6 小时</option><option>每天</option><option>每周</option><option>到期任务</option></select><button className="toggle active" aria-label={`${item.source} 启用`}><i /></button></div>)}</div><div className="cost-guard"><Bell size={19} /><div><b>成本保护</b><span>预计超过每日 $3 或单次深度判断超过 30 个词时，暂停并进入审核队列。</span></div><button className="toggle active"><i /></button></div><div className="modal-actions"><Button onClick={onClose}>取消</Button><Button variant="primary" icon={Check} onClick={onSave}>保存设置</Button></div></Modal>;
 }
 
@@ -303,12 +309,13 @@ function Modal({ title, subtitle, onClose, wide, children }) { return <div class
 function Toast({ message }) { if (!message) return null; return <div className="toast"><CheckCircle size={19} weight="fill" />{message}</div>; }
 
 export function App() {
-  const [active, setActive] = useState("today"); const [keywords, setKeywords] = useState(initialKeywords); const [drawerId, setDrawerId] = useState(null); const [preferencesOpen, setPreferencesOpen] = useState(false); const [systemOpen, setSystemOpen] = useState(false); const [refreshing, setRefreshing] = useState(false); const [lastRefresh, setLastRefresh] = useState("2 分钟前"); const [toast, setToast] = useState("");
+  const [active, setActive] = useState("today"); const [keywords, setKeywords] = useState(initialKeywords); const [providerStatus, setProviderStatus] = useState([]); const [drawerId, setDrawerId] = useState(null); const [preferencesOpen, setPreferencesOpen] = useState(false); const [systemOpen, setSystemOpen] = useState(false); const [refreshing, setRefreshing] = useState(false); const [lastRefresh, setLastRefresh] = useState("2 分钟前"); const [toast, setToast] = useState("");
+  useEffect(() => { fetch("/provider-status.json").then((response) => response.ok ? response.json() : Promise.reject(new Error("provider status unavailable"))).then((data) => setProviderStatus(data.providers || [])).catch(() => setProviderStatus([])); }, []);
   const drawerWord = keywords.find((word) => word.id === drawerId);
   const notify = (message) => { setToast(message); window.setTimeout(() => setToast(""), 2600); };
   const navigate = (page) => { setActive(page); setDrawerId(null); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const updateDecision = (id, value) => { setKeywords((current) => current.map((word) => word.id === id ? { ...word, userDecision: value } : word)); notify(`已将决定更新为“${value}”`); };
   const refresh = () => { if (refreshing) return; setRefreshing(true); window.setTimeout(() => { setRefreshing(false); setLastRefresh("刚刚"); notify("抓取任务已完成：发现 6 个新信号，2 个进入审核队列"); }, 1100); };
-  return <div className="app-shell"><Header active={active} onNavigate={navigate} onOpenPreferences={() => setPreferencesOpen(true)} onOpenSystem={() => setSystemOpen(true)} onRefresh={refresh} refreshing={refreshing} lastRefresh={lastRefresh} />{active === "today" ? <TodayPage keywords={keywords} onOpenKeyword={setDrawerId} onDecision={updateDecision} onNavigate={navigate} /> : null}{active === "keywords" ? <KeywordsPage keywords={keywords} onOpenKeyword={setDrawerId} onDecision={updateDecision} /> : null}{active === "hot" ? <HotPage keywords={keywords} onOpenKeyword={setDrawerId} /> : null}{active === "sites" ? <SitesPage onNavigate={navigate} /> : null}{active === "channels" ? <ChannelsPage keywords={keywords} /> : null}{active === "review" ? <ReviewPage /> : null}{active === "flow" ? <FlowPage /> : null}<footer className="app-footer"><div><img src="/logo.svg" alt="" /><b>Opptune</b><span>基于 new-term-radar 4fd12da 的长期机会监控框架</span></div><span>当前内容含演示数据 · 2026.10.21</span></footer>{drawerWord ? <KeywordDrawer word={drawerWord} onClose={() => setDrawerId(null)} onDecision={updateDecision} onNavigate={navigate} /> : null}{preferencesOpen ? <PreferencesModal onClose={() => setPreferencesOpen(false)} onSave={() => { setPreferencesOpen(false); notify("个人偏好已保存，排序会在下一轮重算"); }} /> : null}{systemOpen ? <SystemModal onClose={() => setSystemOpen(false)} onSave={() => { setSystemOpen(false); notify("系统设置已保存"); }} /> : null}<Toast message={toast} /></div>;
+  return <div className="app-shell"><Header active={active} onNavigate={navigate} onOpenPreferences={() => setPreferencesOpen(true)} onOpenSystem={() => setSystemOpen(true)} onRefresh={refresh} refreshing={refreshing} lastRefresh={lastRefresh} />{active === "today" ? <TodayPage keywords={keywords} onOpenKeyword={setDrawerId} onDecision={updateDecision} onNavigate={navigate} /> : null}{active === "keywords" ? <KeywordsPage keywords={keywords} onOpenKeyword={setDrawerId} onDecision={updateDecision} /> : null}{active === "hot" ? <HotPage keywords={keywords} onOpenKeyword={setDrawerId} /> : null}{active === "sites" ? <SitesPage onNavigate={navigate} /> : null}{active === "channels" ? <ChannelsPage keywords={keywords} /> : null}{active === "review" ? <ReviewPage /> : null}{active === "flow" ? <FlowPage /> : null}<footer className="app-footer"><div><img src="/logo.svg" alt="" /><b>Opptune</b><span>基于 new-term-radar 4fd12da 的长期机会监控框架</span></div><span>当前内容含演示数据 · 2026.10.21</span></footer>{drawerWord ? <KeywordDrawer word={drawerWord} providerStatus={providerStatus} onClose={() => setDrawerId(null)} onDecision={updateDecision} onNavigate={navigate} /> : null}{preferencesOpen ? <PreferencesModal onClose={() => setPreferencesOpen(false)} onSave={() => { setPreferencesOpen(false); notify("个人偏好已保存，排序会在下一轮重算"); }} /> : null}{systemOpen ? <SystemModal providerStatus={providerStatus} onClose={() => setSystemOpen(false)} onSave={() => { setSystemOpen(false); notify("系统设置已保存"); }} /> : null}<Toast message={toast} /></div>;
 }
 

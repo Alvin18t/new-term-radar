@@ -4,7 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "sync:providers": "node scripts/sync-provider-status.mjs",
+    "predev": "npm run sync:providers",
     "dev": "vite",
+    "prebuild": "npm run sync:providers",
     "build": "vite build && node scripts/prepare-sites-build.mjs",
     "preview": "vite preview",
     "test:sites": "node --test tests/sites-worker.test.mjs"

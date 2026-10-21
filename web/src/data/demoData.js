@@ -386,6 +386,9 @@ export const sourceSchedules = [
   { source: "GSC 新查询", kind: "站内机会", frequency: "6 小时", mode: "差异" },
   { source: "价值老词", kind: "老词", frequency: "每天", mode: "全量" },
   { source: "收入 / 新卖家", kind: "商业信号", frequency: "每周", mode: "全量" },
+  { source: "Ahrefs", kind: "最终候选交叉校验", frequency: "每周", mode: "按需 + 7 天缓存" },
+  { source: "Semrush", kind: "最终候选交叉校验", frequency: "每周", mode: "按需 + 7 天缓存" },
+  { source: "Similarweb", kind: "首页域名流量", frequency: "每周", mode: "异步任务" },
   { source: "14 天复核", kind: "复盘", frequency: "每天", mode: "到期任务" },
 ];
 

@@ -185,13 +185,15 @@ A model groups them into gaps (missing, too hard, quality, price, wants a tool),
 
 What it cannot read: App Store, Google Play and Trustpilot reviews (DataForSEO serves them as tasks to post and fetch later, and AIsa runs synchronous calls only); There's An AI For That's request board (a Cloudflare challenge in front of every page; getting past it would be getting past their bot protection, so the radar does not); Facebook groups (Meta closed the Groups API in April 2024, and its research library is open to approved academic and nonprofit researchers only).
 
-## One key, and an optional second
+## One required key, with optional cross-check sources
 
 Everything the radar needs goes through [AIsa](https://go.aisa.one/yansen-zhu): X posts, Google Trends and domain data (DataForSEO behind it) and the models that judge names and propose phrases. One key, pay per call, no subscriptions to X's API or DataForSEO.
 
 > That link is a referral link: signing up through it supports this project. The radar works the same with a key from anywhere on aisa.one.
 
 **Optional: `GOANYAPI_API_KEY`** ([goanyapi.com](https://goanyapi.com/r/ga-95708898fb)) improves the keyword table in two ways, for about $0.07 a day: it adds Google Trends' related queries for each name, and it reads the curve of the names and the bigger generic terms (1,000 searches a month or more, eight rows at most) from 30 days of daily data for one country, settled to yesterday. Those rows show the country after "Now", as in `still rising (US)`. Without the key the table is built from the model's phrases and the worldwide series alone. The service is young (first released in August 2026); in our tests calls took 20 to 55 seconds and about one in ten failed, so the radar tries twice, reports a failure in the table and carries on. That link is a referral link too.
+
+**Optional finalist cross-checks:** set `AHREFS_API_KEY`, `SEMRUSH_API_KEY`, and/or `SIMILARWEB_API_KEY` to enrich the first `providers.max_rows` actionable rows. Ahrefs uses Keywords Explorer v3; Semrush uses Keyword Metrics v4; Similarweb submits one asynchronous Batch API traffic-and-engagement report for the page-one domains and consumes it on a later run. Results are cached for `providers.cache_days` and secrets are read only from the environment. Similarweb's full request/status URLs and vtable can be overridden with `SIMILARWEB_REQUEST_URL`, `SIMILARWEB_STATUS_URL`, and `SIMILARWEB_VTABLE` as its API migration proceeds. Run `python -m radar providers` to see adapter and credential status without exposing key values. A heat-led `prioritize` row is moved to `watch` unless demand, page-one competition, and commercial evidence are all present.
 
 Without an AIsa key the free signals still run (Hugging Face, GitHub, sitemaps, Search Console); the report then lists every term unsorted, because nothing judges which are names.
 
@@ -204,6 +206,7 @@ git clone https://github.com/zhuyansen/new-term-radar
 cd new-term-radar
 cp config.example.json config.json      # then edit: your X accounts, sitemaps, topics
 export AISA_API_KEY=...                 # from https://go.aisa.one/yansen-zhu; or `aisa login` with the AIsa CLI
+# Optional finalists only: AHREFS_API_KEY, SEMRUSH_API_KEY, SIMILARWEB_API_KEY
 python -m radar daily --out report.md
 ```
 
@@ -263,6 +266,7 @@ and from `sources`:
 | `new_sites` | `queries`: a name and a SQL LIKE pattern on the domain (`"%ai%"`), one paid query each; `weekday` (0 = Monday) |
 | `review` | `after_days` (14) and `per_day` (5 leads a day) |
 | `usecases` | The keyword table. `per_day` (names read a day, 0 = off), `model`, `benchmark` (the keyword sizes are compared with), `min_volume` (monthly searches a phrase needs), `min_daily` (searches a day for "prioritize"), `recheck_days` (3), `related` (use related queries when `GOANYAPI_API_KEY` is set), `related_geo` (`US`), `country_trends` (read the bigger rows' curves from that country), `country_min_volume` (1000) and `country_max` (8) |
+| `providers` | Optional direct finalist cross-checks. `enabled`, `max_rows` (3), two-letter `country` (`US`), and paid-response `cache_days` (7). Keys stay in `AHREFS_API_KEY`, `SEMRUSH_API_KEY`, and `SIMILARWEB_API_KEY`. |
 | `gsc` | `site` (`sc-domain:example.com`) and `token_file`. Leave `{}` to turn the signal off |
 
 Please read each site's robots.txt before you add its sitemap, and keep `pause` at or above its crawl-delay. The example config makes a few dozen requests a day in total, spaced by `pause`.

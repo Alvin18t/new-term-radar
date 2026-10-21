@@ -46,6 +46,8 @@ Initial implementation comparison found no P0/P1/P2 issue. The reference composi
 
 The 2026-10-21 multi-source iteration added the evidence gate, keyword verification tab, and provider inventory. `npm run build`, Sites packaging tests, `git diff --check`, and the local HTTP response passed. A fresh automated screenshot and click pass could not be captured because local browser control was disabled in Work settings during this iteration; the earlier desktop/mobile interaction evidence remains the visual baseline. The new layout includes explicit 1180 px and 640 px responsive rules, but the latest browser recapture remains the next QA action when browser control is available.
 
+The direct-provider completion iteration added dynamic `configured`/`missing` status for Ahrefs, Semrush, and Similarweb, plus three advanced schedule rows. The status file contains no key values. Production build and Sites tests passed again; browser automation remains unavailable under the same Work setting.
+
 ## Follow-up polish
 
 - P3: replace demo opportunity data with a real adapter over `radar.db` and scheduled job state.

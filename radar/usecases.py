@@ -52,7 +52,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 from pathlib import Path
 
-from . import UA, aisa, competition, goanyapi, review, snap
+from . import UA, aisa, competition, goanyapi, providers, review, snap
 
 POSTS_KEPT = 12
 POST_CHARS = 400
@@ -518,6 +518,7 @@ def run(cfg: dict, state: Path, names: list[str], repos: dict[str, str], today: 
     local, c4, local_errors = country_series(rows, c) if goanyapi.key() and c.get("country_trends", True) else ({}, 0, [])
     daily = measure(rows, series, c["min_daily"], today, local)
     c5, comp_errors = competition.assess(rows, cfg, state) if cfg.get("competition", {}).get("max_rows") else (0, [])
+    provider_queries, provider_errors = providers.enrich(rows, cfg, state, today) if cfg.get("competition", {}).get("max_rows") else (0, [])
     order = {"prioritize": 0, "watch": 1, "skip": 2}
     rows.sort(key=lambda r: (order[r["decision"]], -(r.get("per_day") or 0), -(r.get("volume") or 0)))
     if not on_request:
@@ -532,7 +533,9 @@ def run(cfg: dict, state: Path, names: list[str], repos: dict[str, str], today: 
             "posts_error": "; ".join(f"{n}: {e['error']}" for n, e in ev.items() if e.get("error")),
             "related": use_related, "tails": {n: v for n, v in tails.items() if v}, "cosearch": cosearch,
             "related_errors": related_errors, "geo": c["related_geo"], "country_errors": local_errors,
-            "competition_errors": comp_errors, "cost_micros": cost + c0 + c2 + c3 + c4 + c5}
+            "competition_errors": comp_errors, "provider_errors": provider_errors,
+            "provider_status": providers.status(), "provider_queries": provider_queries,
+            "cost_micros": cost + c0 + c2 + c3 + c4 + c5}
 
 
 READ_KINDS = {"x", "hf", "breakout", "newsite", "revenue", "seller"}
@@ -555,4 +558,5 @@ def names_to_read(leads_today: list[dict], recent_sources: list[dict]) -> list[s
 
 def degraded(uc: dict) -> bool:
     """A source failed during this run, so the table holds less than it would have."""
-    return bool(uc.get("posts_error") or uc.get("related_errors") or uc.get("country_errors") or uc.get("competition_errors"))
+    return bool(uc.get("posts_error") or uc.get("related_errors") or uc.get("country_errors") or uc.get("competition_errors")
+                or uc.get("provider_errors"))

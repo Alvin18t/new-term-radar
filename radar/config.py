@@ -25,6 +25,7 @@ DEFAULTS = {
                  "location_code": 2840, "benchmark": "gpts", "min_daily": 300, "related": True, "related_geo": "US",
                  "country_trends": True, "country_min_volume": 1000, "country_max": 8},
     "competition": {"max_rows": 8, "weak_dr": 30, "location_code": 2840},
+    "providers": {"enabled": True, "max_rows": 3, "country": "US", "cache_days": 7},
     "revenue": {"weekday": 0, "pages_growth": 3, "pages_new": 3, "min_revenue_usd": 500, "category": "", "max_leads": 10},
     "asks": {"weekday": 0, "time": "week", "min_score": 2, "model": "gpt-4.1-mini", "min_volume": 50, "max_leads": 12,
              "location_code": 2840, "patterns": [

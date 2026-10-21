@@ -14,7 +14,7 @@ This is the interactive web framework for turning `new-term-radar` signals into 
 - Preferences and system settings: global/direction focus, constraints, per-source refresh plans, and model-routing policy.
 - Multi-source gate: heat triggers discovery; Google Trends/Ads, SERP/KD, DR/traffic, advertising/payment evidence, and personal fit determine actionability.
 
-The upstream code currently uses DataForSEO through AIsa, GoAnyAPI, TrustMRR, and public payment-link signals. Ahrefs and Semrush are not directly integrated. Similarweb is discussed as an expensive source, while the running code uses a GoAnyAPI traffic proxy. The UI exposes those states instead of presenting every provider as verified.
+The upstream code uses DataForSEO through AIsa, GoAnyAPI, TrustMRR, and public payment-link signals. This workspace now adds direct Ahrefs Keywords Explorer v3, Semrush Keyword Metrics v4, and asynchronous Similarweb Batch API adapters. The current machine has no credentials for those paid providers, so the UI shows `待凭证` instead of presenting demo values as verified.
 
 The current screen uses labeled demo data in `src/data/demoData.js`. The UI state is browser-local and resets on reload.
 

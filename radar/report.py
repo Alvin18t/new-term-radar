@@ -348,6 +348,38 @@ def _page_one_lines(cfg: dict, uc: dict) -> list[str]:
     return lines
 
 
+def _provider_lines(uc: dict) -> list[str]:
+    """Direct-provider readiness and the finalist rows they cross-checked."""
+    inventory = uc.get("provider_status") or []
+    checked = [r for r in uc.get("rows", []) if r.get("provider_metrics") or r.get("evidence_gate")]
+    if not inventory and not checked and not uc.get("provider_errors"):
+        return []
+    configured = [r["provider"] for r in inventory if r["credential"] == "configured"]
+    missing = [r["provider"] for r in inventory if r["credential"] == "missing"]
+    lines = ["", t("pv_h"), "", t("pv_status", configured=", ".join(configured) or t("dash"),
+                                      missing=", ".join(missing) or t("dash"))]
+    for row in checked:
+        metrics, bits = row.get("provider_metrics") or {}, []
+        if metrics.get("ahrefs"):
+            m = metrics["ahrefs"]
+            bits.append(f"Ahrefs volume {m.get('volume', t('dash'))}, KD {m.get('difficulty', t('dash'))}, traffic potential {m.get('traffic_potential', t('dash'))}")
+        if metrics.get("semrush"):
+            m = metrics["semrush"]
+            bits.append(f"Semrush volume {m.get('search_volume', t('dash'))}, KD {m.get('keyword_difficulty', t('dash'))}, CPC {m.get('cpc', t('dash'))}")
+        if metrics.get("similarweb"):
+            bits.append(f"Similarweb {len(metrics['similarweb'].get('domains') or {})} domains")
+        gate = row.get("evidence_gate") or {}
+        if gate.get("conflicts"):
+            bits.append(t("pv_conflict", metrics=", ".join(c["metric"] for c in gate["conflicts"])))
+        lines.append(t("pv_row", phrase=row["phrase"], evidence="; ".join(bits) or t("pv_core_only"),
+                       confidence=gate.get("confidence", "low"), actionable=t("pv_yes" if gate.get("actionable") else "pv_no")))
+    if any(r.get("verification_demoted") for r in uc.get("rows", [])):
+        lines.append(t("pv_demoted"))
+    if uc.get("provider_errors"):
+        lines.append(t("pv_err", why="; ".join(uc["provider_errors"])))
+    return lines
+
+
 def keyword_table(cfg: dict, uc: dict) -> list[str]:
     """One table for the day: the names read and the generic terms behind them, each with a decision."""
     if uc.get("skipped"):
@@ -379,6 +411,7 @@ def keyword_table(cfg: dict, uc: dict) -> list[str]:
             f"{_page_one(r.get('competition'))} | {t('uc_' + r['decision'])}{' ↓' if r.get('demoted') else ''} |")
     lines += ["", t("uc_rules", min_daily=c["min_daily"])]
     lines += _page_one_lines(cfg, uc)
+    lines += _provider_lines(uc)
     if any(r["kind"] == "generic" and r["brand"] for r in uc["rows"]):
         lines.append(t("uc_brand_note"))
     if any(r.get("trend_geo") for r in uc["rows"]):

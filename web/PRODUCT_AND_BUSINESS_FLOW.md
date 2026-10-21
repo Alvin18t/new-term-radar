@@ -62,8 +62,10 @@
 
 - DataForSEO 由 AIsa 包装，承担 Trends、Google Ads 搜索量、SERP 和 KD 等查询。
 - GoAnyAPI 承担相关查询、国家日趋势、DR、Intitle、广告主和 traffic 访问量代理。
-- Similarweb 没有直接 API 调用；README 只把它列为成本较高的数据方案。界面必须标记为“未直连/代理”。
-- Ahrefs 和 Semrush 当前没有直接集成，不能展示为已校验来源。
+- 已增加 Ahrefs Keywords Explorer v3 直连适配器，读取搜索量、KD、CPC、点击、流量潜力、父主题、意图和 SERP 特征。
+- 已增加 Semrush Keyword Metrics v4 直连适配器，读取搜索量、KD、CPC、付费竞争密度、意图、趋势和 SERP 特征。
+- 已增加 Similarweb Batch API 非阻塞适配器：对最终候选词的首页域名提交访问与参与度报告，后续监控轮次查询状态、下载并缓存结果。
+- 当前机器未配置三家付费 API 凭证。产品显示“适配器已就绪/待凭证”，只有收到真实响应后才显示“已校验”。
 
 未来适配器按来源独立保存，不覆盖现有值：Ahrefs 用于流量潜力、反链与父主题；Semrush 用于搜索意图、CPC、付费密度和关键词差距；Similarweb 用于入围站点的地域、渠道结构和访问参与度。来源冲突时进入人工复核，不由模型自行抹平。
 

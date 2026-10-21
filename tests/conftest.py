@@ -9,6 +9,8 @@ from radar import aisa, config, goanyapi, i18n
 def english(monkeypatch):
     i18n.set_lang("en")
     monkeypatch.delenv("GOANYAPI_API_KEY", raising=False)   # the optional source is off unless a test turns it on
+    for name in ("AHREFS_API_KEY", "SEMRUSH_API_KEY", "SIMILARWEB_API_KEY"):
+        monkeypatch.delenv(name, raising=False)
 
     def no_network(*a, **k):
         raise goanyapi.GoAnyError("no network in tests")

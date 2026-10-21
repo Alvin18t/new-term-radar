@@ -159,6 +159,7 @@ def assess(rows: list[dict], cfg: dict, state: Path) -> tuple[int, list[str]]:
             kinds[x["kind"]] = kinds.get(x["kind"], 0) + 1
         r["competition"] = {"verdict": verdict(weak, kd), "weak": weak, "kd": kd, "ads": p["ads"],
                             "kinds": kinds, "features": p["features"],
+                            "domains": [x["domain"] for x in rated if x["domain"]],
                             "weakest": {k: weakest[k] for k in ("domain", "dr", "position", "url")} if weakest else None}
         if r["decision"] == "prioritize" and r["competition"]["verdict"] == "crowded":
             r["decision"], r["demoted"] = "watch", True
