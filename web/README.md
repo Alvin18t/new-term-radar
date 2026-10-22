@@ -1,4 +1,4 @@
-# Opptune keyword opportunity radar
+# Signalrank keyword opportunity radar
 
 This is the interactive web framework for turning `new-term-radar` signals into a long-running personal opportunity system. It is built against upstream commit `4fd12da` (2026-10-21).
 
