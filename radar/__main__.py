@@ -207,6 +207,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--repo", action="append", default=[], metavar="NAME=OWNER/REPO", help="for `keywords`: a name's GitHub repository")
     p.add_argument("--days", type=int, default=7, help="for `leads`: how far back")
     p.add_argument("--json", action="store_true", help="for `keywords` and `leads`: print JSON")
+    p.add_argument("--check", action="store_true", help="for `providers`: verify direct DataForSEO credentials with a free endpoint")
     p.add_argument("--config", default="config.json")
     p.add_argument("--state", default="state", help="directory for radar.db and the snapshots")
     p.add_argument("--out", help="write the report (Markdown) here; `daily` also writes a .json beside it")
@@ -227,9 +228,11 @@ def main(argv: list[str] | None = None) -> int:
         p.error(f"--skip: unknown {sorted(unknown)}")
     state = Path(args.state)
     if args.command == "providers":
-        rows = providers.status()
+        rows = providers.status(check=args.check)
         print(json.dumps(rows, ensure_ascii=False, indent=1) if args.json else "\n".join(
-            f"{r['provider']}: adapter {r['adapter']}, credential {r['credential']} ({r['env']}) · {r['capabilities']}" for r in rows))
+            f"{r['provider']}: adapter {r['adapter']}, credential {r['credential']} ({r['env']}) · "
+            f"route {r.get('route', 'n/a')} · connection {r.get('connection', 'not_checked')} · {r['capabilities']}"
+            for r in rows))
         return 0
     if args.command == "leads":
         return cmd_leads(args, state)

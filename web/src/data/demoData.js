@@ -385,6 +385,7 @@ export const sourceSchedules = [
   { source: "竞品 Sitemap", kind: "新词", frequency: "1 小时", mode: "差异" },
   { source: "GSC 新查询", kind: "站内机会", frequency: "6 小时", mode: "差异" },
   { source: "价值老词", kind: "老词", frequency: "每天", mode: "全量" },
+  { source: "DataForSEO", kind: "Trends / Ads / SERP / KD", frequency: "每天", mode: "直连优先 · AIsa 备用" },
   { source: "收入 / 新卖家", kind: "商业信号", frequency: "每周", mode: "全量" },
   { source: "Ahrefs", kind: "最终候选交叉校验", frequency: "每周", mode: "按需 + 7 天缓存" },
   { source: "Semrush", kind: "最终候选交叉校验", frequency: "每周", mode: "按需 + 7 天缓存" },

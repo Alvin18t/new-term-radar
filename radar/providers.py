@@ -20,7 +20,7 @@ import urllib.request
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
-from . import UA, snap
+from . import UA, dataforseo, snap
 
 AHREFS_URL = os.environ.get("AHREFS_API_BASE_URL", "https://api.ahrefs.com") + "/v3/keywords-explorer/overview"
 SEMRUSH_URL = os.environ.get("SEMRUSH_API_BASE_URL", "https://api.semrush.com") + "/apis/v4/keywords/v1/metrics"
@@ -40,15 +40,18 @@ def _key(name: str) -> str:
     return os.environ.get(name, "").strip()
 
 
-def status() -> list[dict]:
+def status(check: bool = False) -> list[dict]:
     """Connection inventory without exposing credential values."""
     rows = [
         ("Ahrefs", "AHREFS_API_KEY", "keyword metrics, traffic potential, parent topic"),
         ("Semrush", "SEMRUSH_API_KEY", "volume, KD, CPC, paid density, intent, SERP features"),
         ("Similarweb", "SIMILARWEB_API_KEY", "page-one domain traffic and engagement"),
     ]
-    return [{"provider": provider, "adapter": "ready", "credential": "configured" if _key(env) else "missing",
-             "env": env, "capabilities": capabilities} for provider, env, capabilities in rows]
+    direct = [{"provider": provider, "adapter": "ready", "credential": "configured" if _key(env) else "missing",
+               "env": env, "capabilities": capabilities, "role": "cross_check", "route": "direct",
+               "connection": "not_checked", "detail": "configured state only"}
+              for provider, env, capabilities in rows]
+    return dataforseo.status_rows(check) + direct
 
 
 def _request(url: str, *, headers: dict | None = None, body: dict | None = None, timeout: int = TIMEOUT) -> dict | list:

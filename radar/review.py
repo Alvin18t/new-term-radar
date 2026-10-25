@@ -1,7 +1,7 @@
 """The radar's review: check every lead in Google Trends two weeks later.
 
 review()  takes up to `per_day` leads first seen `after_days` ago or earlier and not yet
-          checked, asks DataForSEO Trends (through AIsa) about each search variant, and
+          checked, asks DataForSEO Trends (direct or through AIsa) about each search variant, and
           stores hit / miss / no_data plus how many days the radar was ahead.
 
 Each variant is its own call: in one shared task the values share a 0-100 scale and a
@@ -20,7 +20,7 @@ import sqlite3
 import statistics
 from datetime import date, timedelta
 
-from . import aisa, store
+from . import dataforseo, store
 
 BEFORE_DAYS = 30
 MAX_VARIANTS = 3      # each costs one Trends task ($0.0012 in October 2026)
@@ -96,7 +96,7 @@ def review(cfg: dict, conn: sqlite3.Connection, today: date | None = None) -> di
     if not due:
         return {"checked": [], "cost_micros": 0, "after_days": c["after_days"]}
     calls, plan = plan_calls(due, today, c["after_days"])
-    data, cost = aisa.call_all(calls)
+    data, cost = dataforseo.call_all(calls)
     checked = []
     for ids, term, first_seen, keys in plan:
         if not all(cid in data for cid in ids):

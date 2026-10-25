@@ -19,7 +19,7 @@ import re
 from datetime import date, timedelta
 from pathlib import Path
 
-from . import aisa, snap
+from . import dataforseo, snap
 from .i18n import t
 from .terms import STOP
 
@@ -60,7 +60,7 @@ def _calls(c: dict, today: date) -> list[dict]:
 def new_sites(cfg: dict, state: Path, today: date | None = None) -> dict:
     c = cfg["new_sites"]
     today = today or date.today()
-    data, cost = aisa.call_all(_calls(c, today))
+    data, cost = dataforseo.call_all(_calls(c, today))
     sites: dict[str, dict] = {}
     for name in c["queries"]:
         task = ((data.get(name) or {}).get("tasks") or [{}])[0]

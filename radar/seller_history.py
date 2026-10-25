@@ -30,7 +30,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from pathlib import Path
 
-from . import aisa, sellers
+from . import dataforseo, sellers
 
 PAGE = 1000
 KIND_BATCH = 60
@@ -60,7 +60,7 @@ def page(platform: str, token: str) -> tuple[list[dict], str, int, str]:
             "order_by": ["first_seen,asc"], "backlinks_status_type": "live"}
     if token:
         body["search_after_token"] = token      # every other field must stay as it was
-    data, cost = aisa.call([{"call_id": "h", "tool": sellers.TOOL, "arguments": {"body": [body]}}])
+    data, cost = dataforseo.call([{"call_id": "h", "tool": sellers.TOOL, "arguments": {"body": [body]}}])
     task = ((data.get("h") or {}).get("tasks") or [{}])[0]
     if task.get("status_code") != 20000:
         return [], token, cost, str(task.get("status_message") or "no answer")[:160]

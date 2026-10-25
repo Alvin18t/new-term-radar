@@ -9,7 +9,9 @@ name: New-term radar
 # Off until you opt in: set the repository variable RADAR_ENABLED to "true"
 # (Settings > Secrets and variables > Actions > Variables), add the secret AISA_API_KEY,
 # and commit your config.json (remove it from .gitignore first; it holds no secrets).
-# Optional secrets: GOANYAPI_API_KEY (related queries in the keyword table),
+# Optional direct search route: DATAFORSEO_LOGIN + DATAFORSEO_PASSWORD. Without them,
+# DataForSEO monitoring calls continue through AIsa. Other optional secrets:
+# GOANYAPI_API_KEY (related queries in the keyword table),
 # AHREFS_API_KEY, SEMRUSH_API_KEY, SIMILARWEB_API_KEY (direct finalist checks),
 # RESEND_API_KEY, EMAIL_FROM, RADAR_EMAIL_TO (mail the reports),
 # GSC_TOKEN_JSON (the Search Console signal).
@@ -63,6 +65,8 @@ jobs:
       - name: Run the radar
         env:
           AISA_API_KEY: ${{ secrets.AISA_API_KEY }}
+          DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
+          DATAFORSEO_PASSWORD: ${{ secrets.DATAFORSEO_PASSWORD }}
           GOANYAPI_API_KEY: ${{ secrets.GOANYAPI_API_KEY }}
           AHREFS_API_KEY: ${{ secrets.AHREFS_API_KEY }}
           SEMRUSH_API_KEY: ${{ secrets.SEMRUSH_API_KEY }}

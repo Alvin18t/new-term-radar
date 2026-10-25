@@ -171,7 +171,7 @@ def test_new_site_name_terms():
 
 def test_new_sites_drop_domains_ranking_for_a_handful_of_terms(cfg, tmp_path, monkeypatch):
     answer = {"tasks": [{"result": [{"items": json.loads(FIXTURE.read_text())}]}]}
-    monkeypatch.setattr(new_sites.aisa, "call_all", lambda calls: ({c["call_id"]: answer for c in calls}, 127000))
+    monkeypatch.setattr(new_sites.dataforseo, "call_all", lambda calls: ({c["call_id"]: answer for c in calls}, 127000))
     out = new_sites.new_sites(cfg, tmp_path, date(2026, 10, 6))
     domains = [r["domain"] for r in out["sites"]]
     assert "ai-hailuo.com" in domains and "neonwin386.ai" not in domains and "oyo88.ai" not in domains
@@ -354,7 +354,7 @@ def test_review_stores_the_verdict(cfg, tmp_path, monkeypatch):
     points = [{"date_from": (date(2026, 9, 19) + timedelta(days=i)).isoformat(), "values": [v]}
               for i, v in enumerate([0, 0, 0, 0, 0, 0, 0, 0, 0, 30, 30, 100, 0, 0])]
     answer = {"tasks": [{"result": [{"items": [{"data": points}]}]}]}
-    monkeypatch.setattr(review.aisa, "call_all", lambda calls: ({c["call_id"]: answer for c in calls}, 1200))
+    monkeypatch.setattr(review.dataforseo, "call_all", lambda calls: ({c["call_id"]: answer for c in calls}, 1200))
     out = review.review(cfg, conn, date(2026, 10, 10))
     assert out["checked"] == [{"term": "niko strata", "first_seen": "2026-09-25", "verdict": "hit", "lead_days": 3}]
     assert conn.execute("SELECT verdict, lead_days FROM leads").fetchone() == ("hit", 3)
@@ -574,7 +574,7 @@ def test_review_ignores_the_unsettled_days(cfg, tmp_path, monkeypatch):
     store.record(conn, [_lead("ai image detector", ["usecase"])], date(2026, 9, 28))
     points = [{"date_from": d.isoformat(), "values": [v]} for d, v in _daily([5] * 43 + [0, 100])]
     answer = {"tasks": [{"result": [{"items": [{"data": points}]}]}]}
-    monkeypatch.setattr(review.aisa, "call_all", lambda calls: ({c["call_id"]: answer for c in calls}, 1200))
+    monkeypatch.setattr(review.dataforseo, "call_all", lambda calls: ({c["call_id"]: answer for c in calls}, 1200))
     assert review.review(cfg, conn, TODAY)["checked"][0]["verdict"] == "miss"
 
 
@@ -904,7 +904,7 @@ def test_a_crowded_rising_term_is_watched_not_prioritized(cfg, tmp_path, monkeyp
         items = [{"keyword": k, "keyword_properties": {"keyword_difficulty": 60 if k == "crowded term" else 25}}
                  for k in c["arguments"]["body"][0]["keywords"]]
         return {"kd": {"tasks": [{"result": [{"items": items}]}]}}, 12000
-    monkeypatch.setattr(competition.aisa, "call", call)
+    monkeypatch.setattr(competition.dataforseo, "call", call)
     rated = {"canva.com": 94, "adobe.com": 96, "tiny1.ai": 8, "tiny2.ai": 12, "tiny3.ai": 21}
     asked = []
 
@@ -1122,7 +1122,7 @@ def test_sellers_keep_payment_links_and_leave_out_the_rest(cfg, tmp_path, monkey
     def call(calls):
         target = calls[0]["arguments"]["body"][0]["target"]
         return (_sites(new[target]) if calls[0]["tool"] == sellers.DOMAINS else _backlinks(answers[target])), 27600
-    monkeypatch.setattr(sellers.aisa, "call", call)
+    monkeypatch.setattr(sellers.dataforseo, "call", call)
     monkeypatch.setattr(sellers, "page_words", lambda host: ("Pestora — pest control software", "Book and bill pest jobs") if host.startswith("pestora")
                         else ("", ""))
     kinds = {"pestora.framer.website": "ai", "meeting-demo.app": "ai", "janemaker.com": "content", "launch-demo.app": "ai", "try.demotools.dev": "ai"}
@@ -1192,7 +1192,7 @@ def test_history_pulls_every_page_and_picks_up_where_it_stopped(tmp_path, monkey
         sent.append(body)
         assert body["order_by"] == ["first_seen,asc"] and body["mode"] == "one_per_domain"
         return _history_page(*pages[body.get("search_after_token", "")]), 60000
-    monkeypatch.setattr(seller_history.aisa, "call", call)
+    monkeypatch.setattr(seller_history.dataforseo, "call", call)
     db = seller_history.connect(tmp_path)
     first = seller_history.pull(db, ["gumroad"], 50000)                        # the budget runs out after one page
     assert first["platforms"]["gumroad"] == {"rows": 2, "done": False, "cost_micros": 60000, "spent_micros": 60000, "error": ""}
@@ -1205,7 +1205,7 @@ def test_history_pulls_every_page_and_picks_up_where_it_stopped(tmp_path, monkey
 
 def test_history_stops_on_a_refused_page(tmp_path, monkeypatch):
     refused = {"h": {"tasks": [{"status_code": 40501, "status_message": "Invalid Field: 'search_after_token'."}]}}
-    monkeypatch.setattr(seller_history.aisa, "call", lambda calls: (refused, 0))
+    monkeypatch.setattr(seller_history.dataforseo, "call", lambda calls: (refused, 0))
     db = seller_history.connect(tmp_path)
     got = seller_history.pull(db, ["polar"], 1_000_000)["platforms"]["polar"]
     assert not got["done"] and "Invalid Field" in got["error"]

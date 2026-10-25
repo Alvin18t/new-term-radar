@@ -52,7 +52,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 from pathlib import Path
 
-from . import UA, aisa, competition, goanyapi, providers, review, snap
+from . import UA, aisa, competition, dataforseo, goanyapi, providers, review, snap
 
 POSTS_KEPT = 12
 POST_CHARS = 400
@@ -270,7 +270,7 @@ def volumes(phrases: list[str], location_code: int) -> tuple[dict[str, dict], in
     """{phrase: {"volume", "month"}} from Google Ads, one batch call."""
     if not phrases:
         return {}, 0
-    data, cost = aisa.call([{"call_id": "vol", "tool": VOLUME_TOOL, "arguments": {"body": [{
+    data, cost = dataforseo.call([{"call_id": "vol", "tool": VOLUME_TOOL, "arguments": {"body": [{
         "keywords": phrases, "location_code": location_code, "language_code": "en"}]}}])
     out = {}
     for r in ((data.get("vol") or {}).get("tasks") or [{}])[0].get("result") or []:
@@ -441,7 +441,7 @@ def fetch_series(keywords: list[str], benchmark: str, today: date) -> tuple[dict
     for i, k in enumerate(keywords):
         calls.append({"call_id": f"s{i}", "tool": review.TOOL, "arguments": {"body": [{"keywords": [k], **window}]}})
         calls.append({"call_id": f"p{i}", "tool": review.TOOL, "arguments": {"body": [{"keywords": [k, benchmark], **window}]}})
-    data, cost = aisa.call_all(calls)
+    data, cost = dataforseo.call_all(calls)
     task = lambda cid: ((data.get(cid) or {}).get("tasks") or [{}])[0]  # noqa: E731
     return {k: {"solo": review._series(task(f"s{i}")), "pair": _pairs(task(f"p{i}"))} for i, k in enumerate(keywords)}, cost
 

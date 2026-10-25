@@ -2,7 +2,7 @@
 
 A product's first payment link says more than a launch post: someone built a thing and asked
 for money for it. Payment links are ordinary links on the seller's own page, so the public link
-graph (DataForSEO through AIsa) shows them, each with the day it was first seen:
+graph (direct DataForSEO when configured, otherwise AIsa) shows them, each with the day it was first seen:
 
 - Stripe Payment Links (buy.stripe.com) and Polar checkout links (buy.polar.sh): every link is one;
 - Lemon Squeezy store checkouts (<store>.lemonsqueezy.com/checkout or /buy);
@@ -44,7 +44,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from pathlib import Path
 
-from . import UA, aisa, goanyapi, snap
+from . import UA, aisa, dataforseo, goanyapi, snap
 from .i18n import t
 
 TOOL = "post_dataforseo_backlinks_backlinks_live"
@@ -113,7 +113,7 @@ def result(data: dict, call_id: str) -> dict:
 def links(platform: str, limit: int, rank_max: int = 350) -> tuple[list[dict], int]:
     """The newest site per linking domain that carries a payment link of this platform."""
     target, is_payment = PLATFORMS[platform]
-    data, cost = aisa.call([{"call_id": "b", "tool": TOOL, "arguments": {"body": [{
+    data, cost = dataforseo.call([{"call_id": "b", "tool": TOOL, "arguments": {"body": [{
         "target": target, "mode": "one_per_domain", "limit": limit, "order_by": ["first_seen,desc"], "backlinks_status_type": "live"}]}}])
     out = []
     for i in result(data, "b").get("items") or []:
@@ -128,7 +128,7 @@ def links(platform: str, limit: int, rank_max: int = 350) -> tuple[list[dict], i
 
 def started(platform: str, limit: int) -> tuple[dict[str, str], int]:
     """{site: day} for the sites whose first link to this platform is among the newest `limit`."""
-    data, cost = aisa.call([{"call_id": "d", "tool": DOMAINS, "arguments": {"body": [{
+    data, cost = dataforseo.call([{"call_id": "d", "tool": DOMAINS, "arguments": {"body": [{
         "target": PLATFORMS[platform][0], "limit": limit, "order_by": ["first_seen,desc"], "backlinks_status_type": "live"}]}}])
     return {i["domain"].lower().removeprefix("www."): str(i.get("first_seen") or "")[:10]
             for i in result(data, "d").get("items") or [] if i.get("domain")}, cost
@@ -222,7 +222,7 @@ def fresh(c: dict, seen: dict[str, str]) -> dict:
             out["cost"] += spent
             sites, spent = started(platform, c["per_platform"])
             out["cost"] += spent
-        except aisa.AisaError as exc:
+        except dataforseo.DataForSEOError as exc:
             out["errors"].append(f"{platform}: {exc}")
             continue
         out["read"] += len(rows)

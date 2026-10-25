@@ -49,13 +49,35 @@ function MiniBars({ value = 70, tone = "red" }) {
   return <span className="mini-bars" aria-label={`机会强度 ${value}`}>{heights.map((height, index) => <i key={index} className={`mini-bars__bar mini-bars__bar--${tone}`} style={{ height: `${height}%` }} />)}</span>;
 }
 
+function providerBadge(item) {
+  if (!item) return { label: "待凭证", tone: "orange" };
+  if (item.route === "invalid") return { label: "配置错误", tone: "red" };
+  if (item.connection === "verified") return { label: "已验证", tone: "green" };
+  if (item.connection === "error") return { label: "连接失败", tone: "red" };
+  if (item.credential === "configured") return { label: "可运行", tone: "blue" };
+  if (item.credential === "partial") return { label: "凭证不完整", tone: "red" };
+  return { label: "待凭证", tone: "orange" };
+}
+
+function searchRoute(providerStatus = []) {
+  const dataforseo = providerStatus.find((item) => item.provider === "DataForSEO");
+  if (dataforseo?.route === "direct") return { label: "DataForSEO 直连", state: providerBadge(dataforseo).label };
+  if (dataforseo?.route === "aisa") return { label: "DataForSEO 经 AIsa", state: "可运行" };
+  return { label: "待配置 DataForSEO 或 AIsa", state: "待凭证" };
+}
+
+function routeText(route) {
+  return { direct: "直连", aisa: "AIsa 备用", primary: "主通道", unavailable: "未配置", invalid: "配置错误" }[route] || route;
+}
+
 function verificationRows(word, providerStatus = []) {
   const trendLabel = word.trend === "rising" ? "持续上涨" : word.trend === "steady" ? "稳定需求" : "新出现，待沉淀";
-  const directState = (provider) => providerStatus.find((item) => item.provider === provider)?.credential === "configured" ? "可运行" : "待凭证";
+  const directState = (provider) => providerBadge(providerStatus.find((item) => item.provider === provider)).label;
+  const search = searchRoute(providerStatus);
   return [
-    { dimension: "趋势", provider: "Google Trends", route: "AIsa / GoAnyAPI", value: `${trendLabel} · ${word.searchGrowth}`, state: "已校验" },
-    { dimension: "需求规模", provider: "Google Ads", route: "DataForSEO 经 AIsa", value: `月搜约 ${(word.dailySearch * 30).toLocaleString()}`, state: "已校验" },
-    { dimension: "首页竞争", provider: "Google SERP + KD", route: "DataForSEO 经 AIsa", value: word.weakResults === null ? "SERP 待抓取" : `${word.competition} · ${word.weakResults} 个弱结果`, state: word.weakResults === null ? "待补" : "已校验" },
+    { dimension: "趋势", provider: "Google Trends", route: `${search.label} / GoAnyAPI`, value: `${trendLabel} · ${word.searchGrowth}`, state: search.state },
+    { dimension: "需求规模", provider: "Google Ads", route: search.label, value: `月搜约 ${(word.dailySearch * 30).toLocaleString()}`, state: search.state },
+    { dimension: "首页竞争", provider: "Google SERP + KD", route: search.label, value: word.weakResults === null ? "SERP 待抓取" : `${word.competition} · ${word.weakResults} 个弱结果`, state: word.weakResults === null ? "待补" : search.state },
     { dimension: "站点强度", provider: "Domain rating", route: "GoAnyAPI DR", value: word.weakResults === null ? "尚无结果域名" : "逐个评估首页域名", state: word.weakResults === null ? "待补" : "已校验" },
     { dimension: "供给 / 广告", provider: "Intitle + Ads", route: "GoAnyAPI", value: word.revenueSignal === "未知" ? "广告与页面供给待核对" : "检查新增页面与广告主", state: "部分" },
     { dimension: "商业验证", provider: "TrustMRR / 收款链接", route: "AIsa + 公开外链", value: `商业信号：${word.revenueSignal}`, state: word.revenueSignal === "未知" ? "待补" : "已校验" },
@@ -272,9 +294,9 @@ function KeywordDrawer({ word, providerStatus, onClose, onDecision, onNavigate }
 function JudgementPanel({ word }) { return <div className="drawer-panel"><section><p className="panel-label">系统结论</p><div className="system-labels">{word.systemLabels.map((label) => <Chip key={label} tone={label === "高净值" ? "gold" : "green"} icon={label === "高净值" ? Heart : CheckCircle}>{label}</Chip>)}</div><p className="lead-copy">{word.summary}</p><p className="score-note"><CheckCircle size={15} />结论由需求、竞争、商业、可执行性和个人匹配共同生成；热度只表示检查时机。</p></section><section><p className="panel-label">为什么现在</p><ol className="reason-list">{word.whyNow.map((reason, index) => <li key={reason}><span>{index + 1}</span><p>{reason}</p></li>)}</ol></section><section><p className="panel-label">建议做法</p><div className="recommendation-box"><Sparkle size={20} weight="fill" /><p>{word.recommendation}</p></div></section><section><p className="panel-label">下一动作</p><div className="next-action-box"><Target size={20} /><p>{word.nextAction}</p></div></section></div>; }
 
 function VerificationPanel({ word, providerStatus }) {
-  const rows = verificationRows(word, providerStatus); const coverage = evidenceCoverage(word);
+  const rows = verificationRows(word, providerStatus); const coverage = { ready: rows.filter((row) => ["已校验", "已验证", "可运行"].includes(row.state)).length, total: rows.length };
   const readyProviders = providerStatus.filter((item) => item.credential === "configured").map((item) => item.provider);
-  return <div className="drawer-panel verification-panel"><section><div className="verification-summary"><div><span>可用证据</span><strong>{coverage.ready}/{coverage.total}</strong></div><p>热度只触发检查，不直接产生“建议做”。需求、竞争与商业证据必须全部通过；直连供应商用于提高置信度和发现冲突。</p></div></section><section><p className="panel-label">多源交叉校验</p><div className="verification-table">{rows.map((row, index) => <article key={`${row.provider}-${index}`}><div><b>{row.dimension}</b><small>{row.provider}</small></div><div><span>{row.value}</span><small>{row.route}</small></div><Chip tone={row.state === "已校验" ? "green" : row.state === "可运行" ? "blue" : row.state === "部分" || row.state === "代理" || row.state === "待凭证" ? "orange" : "neutral"}>{row.state}</Chip></article>)}</div></section><section className="evidence-warning"><WarningCircle size={20} /><p>直连适配器已经完成。{readyProviders.length ? `${readyProviders.join("、")} 已具备本机凭证，可在下一轮真实监控中运行。` : "当前机器没有三家付费 API 凭证，因此准确显示“待凭证”。"}凭证只从本机环境变量读取，不进入前端或仓库。</p></section></div>;
+  return <div className="drawer-panel verification-panel"><section><div className="verification-summary"><div><span>可用证据</span><strong>{coverage.ready}/{coverage.total}</strong></div><p>热度只触发检查，不直接产生“建议做”。需求、竞争与商业证据必须全部通过；直连供应商用于提高置信度和发现冲突。</p></div></section><section><p className="panel-label">多源交叉校验</p><div className="verification-table">{rows.map((row, index) => <article key={`${row.provider}-${index}`}><div><b>{row.dimension}</b><small>{row.provider}</small></div><div><span>{row.value}</span><small>{row.route}</small></div><Chip tone={row.state === "已校验" || row.state === "已验证" ? "green" : row.state === "可运行" ? "blue" : row.state === "连接失败" || row.state === "凭证不完整" ? "red" : row.state === "部分" || row.state === "代理" || row.state === "待凭证" ? "orange" : "neutral"}>{row.state}</Chip></article>)}</div></section><section className="evidence-warning"><WarningCircle size={20} /><p>搜索监控会优先使用 DataForSEO 直连，缺少直连凭证时才走 AIsa。{readyProviders.length ? `${readyProviders.join("、")} 已具备本机凭证；“可运行”只表示配置存在，真实响应后才标记“已验证”。` : "当前机器没有供应商凭证，因此准确显示“待凭证”。"}凭证只从本机环境变量读取，不进入前端或仓库。</p></section></div>;
 }
 
 function EvidencePanel({ word }) { return <div className="drawer-panel"><section><p className="panel-label">证据时间线</p><div className="evidence-list">{word.evidence.map((item, index) => <article key={`${item.source}-${index}`}><span><StatusDot tone={index === 0 ? "red" : "orange"} /></span><div><b>{item.source}</b><p>{item.note}</p><small>{item.time}</small></div></article>)}</div></section><section className="evidence-warning"><WarningCircle size={20} /><p>当前内容为可交互框架的演示数据。接入 `radar/store.py` 与运行结果后，证据将由真实来源和抓取时间填充。</p></section></div>; }
@@ -290,19 +312,20 @@ function PreferencesModal({ onClose, onSave }) {
 
 function SystemModal({ providerStatus, onClose, onSave }) {
   const [advanced, setAdvanced] = useState(false);
-  const coreProviders = [
-    ["DataForSEO · AIsa", "Trends / Ads / SERP / KD", "适配器就绪", "green"],
-    ["GoAnyAPI", "DR / Intitle / Ads / Traffic", "适配器就绪", "green"],
-    ["TrustMRR / 收款链接", "收入与付费证据", "适配器就绪", "green"],
-  ];
   const directStatus = providerStatus.length ? providerStatus : [
+    { provider: "DataForSEO", capabilities: "Trends / Ads / SERP / KD / WHOIS / Backlinks", credential: "missing", env: "DATAFORSEO_LOGIN + DATAFORSEO_PASSWORD", route: "unavailable" },
+    { provider: "AIsa", capabilities: "社媒发现 / 证据提取 / 模型", credential: "missing", env: "AISA_API_KEY", route: "unavailable" },
     { provider: "Ahrefs", capabilities: "KD / 流量潜力 / 父主题", credential: "missing" },
     { provider: "Semrush", capabilities: "意图 / CPC / 付费密度", credential: "missing" },
     { provider: "Similarweb", capabilities: "Batch API · 首页域名流量", credential: "missing" },
   ];
-  const directProviders = directStatus.map((item) => [item.provider, item.capabilities, item.credential === "configured" ? "可运行" : "待凭证", item.credential === "configured" ? "green" : "orange"]);
-  const providers = [...coreProviders, ...directProviders];
-  return <Modal title="系统与推理设置" subtitle="采集频率、数据源、成本上限和模型分工可以独立调整。" onClose={onClose} wide><div className="model-policy"><div><Sparkle size={22} weight="fill" /><div><span>深度机会判断</span><b>GPT-6 Astra · XHigh</b><small>只在多源证据齐全或人工要求时触发</small></div><Chip tone="gold">最强推理</Chip></div><div><Lightning size={22} /><div><span>日常分类与摘要</span><b>GPT-6.1 Sol · High</b><small>用于重复任务，控制延迟与成本</small></div><Chip tone="blue">默认</Chip></div></div><section className="provider-inventory"><div className="schedule-head"><div><h3>关键词校验数据源</h3><p>状态来自当前 GitHub 仓库代码，不把代理数据标成官方直连。</p></div></div><div>{providers.map(([name, use, state, tone]) => <article key={name}><span><b>{name}</b><small>{use}</small></span><Chip tone={tone}>{state}</Chip></article>)}</div></section><div className="schedule-head"><div><h3>刷新计划</h3><p>频率指后台采集；页面默认每分钟读取一次最新状态。</p></div><button className="text-link" onClick={() => setAdvanced(!advanced)}>{advanced ? "收起高级项" : "显示高级项"}<CaretDown size={14} /></button></div><div className="schedule-table">{sourceSchedules.filter((_, index) => advanced || index < 6).map((item) => <div key={item.source}><span><b>{item.source}</b><small>{item.kind} · {item.mode}</small></span><select defaultValue={item.frequency}><option>2 分钟</option><option>5 分钟</option><option>15 分钟</option><option>1 小时</option><option>6 小时</option><option>每天</option><option>每周</option><option>到期任务</option></select><button className="toggle active" aria-label={`${item.source} 启用`}><i /></button></div>)}</div><div className="cost-guard"><Bell size={19} /><div><b>成本保护</b><span>预计超过每日 $3 或单次深度判断超过 30 个词时，暂停并进入审核队列。</span></div><button className="toggle active"><i /></button></div><div className="modal-actions"><Button onClick={onClose}>取消</Button><Button variant="primary" icon={Check} onClick={onSave}>保存设置</Button></div></Modal>;
+  const configuredProviders = directStatus.map((item) => ({ ...item, badge: providerBadge(item) }));
+  const auxiliaryProviders = [
+    { provider: "GoAnyAPI", capabilities: "DR / Intitle / Ads / Traffic", env: "GOANYAPI_API_KEY", badge: { label: "可选", tone: "neutral" } },
+    { provider: "TrustMRR / 收款链接", capabilities: "收入与付费证据", env: "TRUSTMRR_API_KEY", badge: { label: "可选", tone: "neutral" } },
+  ];
+  const providers = [...configuredProviders, ...auxiliaryProviders];
+  return <Modal title="系统与推理设置" subtitle="采集频率、数据源、成本上限和模型分工可以独立调整。" onClose={onClose} wide><div className="model-policy"><div><Sparkle size={22} weight="fill" /><div><span>深度机会判断</span><b>GPT-6 Astra · XHigh</b><small>只在多源证据齐全或人工要求时触发</small></div><Chip tone="gold">最强推理</Chip></div><div><Lightning size={22} /><div><span>日常分类与摘要</span><b>GPT-6.1 Sol · High</b><small>用于重复任务，控制延迟与成本</small></div><Chip tone="blue">默认</Chip></div></div><section className="provider-routing"><div><Database size={19} /><span><b>DataForSEO · 搜索监控</b><small>配置 <code>DATAFORSEO_LOGIN</code> + <code>DATAFORSEO_PASSWORD</code> 后自动直连。</small></span></div><ArrowRight size={16} /><div><Sparkle size={19} /><span><b>AIsa · 发现与提取</b><small>配置 <code>AISA_API_KEY</code>；未配 DataForSEO 时兼作搜索备用路由。</small></span></div></section><section className="provider-inventory"><div className="schedule-head"><div><h3>关键词校验数据源</h3><p>这里只显示凭证是否存在和实际路由；凭证不进入浏览器。</p></div></div><div>{providers.map((item) => <article key={item.provider}><span><b>{item.provider}</b><small>{item.capabilities}</small><code>{item.env}{item.route ? ` · ${routeText(item.route)}` : ""}</code></span><Chip tone={item.badge.tone}>{item.badge.label}</Chip></article>)}</div></section><div className="schedule-head"><div><h3>刷新计划</h3><p>频率指后台采集；页面默认每分钟读取一次最新状态。</p></div><button className="text-link" onClick={() => setAdvanced(!advanced)}>{advanced ? "收起高级项" : "显示高级项"}<CaretDown size={14} /></button></div><div className="schedule-table">{sourceSchedules.filter((_, index) => advanced || index < 6).map((item) => <div key={item.source}><span><b>{item.source}</b><small>{item.kind} · {item.mode}</small></span><select defaultValue={item.frequency}><option>2 分钟</option><option>5 分钟</option><option>15 分钟</option><option>1 小时</option><option>6 小时</option><option>每天</option><option>每周</option><option>到期任务</option></select><button className="toggle active" aria-label={`${item.source} 启用`}><i /></button></div>)}</div><div className="cost-guard"><Bell size={19} /><div><b>成本保护</b><span>预计超过每日 $3 或单次深度判断超过 30 个词时，暂停并进入审核队列。</span></div><button className="toggle active"><i /></button></div><div className="modal-actions"><Button onClick={onClose}>取消</Button><Button variant="primary" icon={Check} onClick={onSave}>保存设置</Button></div></Modal>;
 }
 
 function Modal({ title, subtitle, onClose, wide, children }) { return <div className="modal-layer" role="dialog" aria-modal="true"><button className="modal-backdrop" onClick={onClose} aria-label="关闭" /><section className={cx("modal", wide && "modal--wide")}><header><div><h2>{title}</h2><p>{subtitle}</p></div><button className="icon-button" onClick={onClose}><X size={20} /></button></header><div className="modal-body">{children}</div></section></div>; }

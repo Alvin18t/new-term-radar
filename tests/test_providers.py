@@ -3,15 +3,80 @@ from __future__ import annotations
 from datetime import date
 from urllib.parse import parse_qs, urlparse
 
-from radar import config, providers
+from radar import config, dataforseo, providers
 
 
 def test_status_distinguishes_ready_adapter_from_missing_credential(monkeypatch):
     monkeypatch.setenv("AHREFS_API_KEY", "configured")
+    monkeypatch.setenv("DATAFORSEO_LOGIN", "login")
+    monkeypatch.setenv("DATAFORSEO_PASSWORD", "password")
     rows = {row["provider"]: row for row in providers.status()}
+    assert rows["DataForSEO"]["route"] == "direct" and rows["DataForSEO"]["credential"] == "configured"
+    assert rows["AIsa"]["credential"] == "missing" and rows["AIsa"]["role"] == "discovery_and_ai"
     assert rows["Ahrefs"]["adapter"] == "ready" and rows["Ahrefs"]["credential"] == "configured"
     assert rows["Semrush"]["adapter"] == "ready" and rows["Semrush"]["credential"] == "missing"
     assert "SEMRUSH_API_KEY" == rows["Semrush"]["env"]
+
+
+def test_dataforseo_auto_route_prefers_direct_and_keeps_raw_response(monkeypatch):
+    monkeypatch.setenv("DATAFORSEO_LOGIN", "login")
+    monkeypatch.setenv("DATAFORSEO_PASSWORD", "password")
+    seen = {}
+    answer = {"status_code": 20000, "cost": 0.0012, "tasks": [{"status_code": 20000, "result": []}]}
+
+    def request(path, body=None, timeout=dataforseo.TIMEOUT):
+        seen.update(path=path, body=body, timeout=timeout)
+        return answer
+
+    monkeypatch.setattr(dataforseo, "_request", request)
+    out, cost = dataforseo.call([{"call_id": "trend", "tool": "post_dataforseo_keywords_trends_explore_live",
+                                  "arguments": {"body": [{"keywords": ["signalrank"]}]}}])
+    assert seen["path"] == "/v3/keywords_data/google_trends/explore/live"
+    assert seen["body"] == [{"keywords": ["signalrank"]}]
+    assert out == {"trend": answer} and cost == 1200
+
+
+def test_dataforseo_auto_route_uses_aisa_only_when_direct_credentials_are_absent(monkeypatch):
+    monkeypatch.setenv("AISA_API_KEY", "configured")
+    expected = ({"vol": {"tasks": []}}, 90000)
+    monkeypatch.setattr(dataforseo.aisa, "call", lambda calls: expected)
+    assert dataforseo.route_status() == "aisa"
+    assert dataforseo.call([{"call_id": "vol", "tool": "post_dataforseo_keywords_gads_search_volume_live",
+                             "arguments": {"body": [{"keywords": ["signalrank"]}]}}]) == expected
+
+
+def test_dataforseo_direct_failure_never_falls_back_and_double_bills(monkeypatch):
+    monkeypatch.setenv("DATAFORSEO_LOGIN", "login")
+    monkeypatch.setenv("DATAFORSEO_PASSWORD", "password")
+    fallback = []
+    monkeypatch.setattr(dataforseo.aisa, "call", lambda calls: fallback.append(calls))
+    monkeypatch.setattr(dataforseo, "_request", lambda *a, **k: (_ for _ in ()).throw(
+        dataforseo.DataForSEOError("HTTP 500")))
+    import pytest
+    with pytest.raises(dataforseo.DataForSEOError, match="HTTP 500"):
+        dataforseo.call([{"call_id": "serp", "tool": "post_dataforseo_serp_google_organic_live",
+                          "arguments": {"body": [{"keyword": "signalrank"}]}}])
+    assert fallback == []
+
+
+def test_dataforseo_partial_credentials_are_reported_without_secret_values(monkeypatch):
+    monkeypatch.setenv("DATAFORSEO_LOGIN", "private-login")
+    rows = {row["provider"]: row for row in providers.status()}
+    assert rows["DataForSEO"]["credential"] == "partial"
+    assert rows["DataForSEO"]["route"] == "unavailable"
+    assert "private-login" not in str(rows)
+
+
+def test_provider_check_uses_the_free_dataforseo_user_endpoint(monkeypatch):
+    monkeypatch.setenv("DATAFORSEO_LOGIN", "login")
+    monkeypatch.setenv("DATAFORSEO_PASSWORD", "password")
+    seen = []
+    monkeypatch.setattr(dataforseo, "_request", lambda path, body=None: seen.append((path, body)) or {
+        "status_code": 20000, "cost": 0, "tasks": [{"status_code": 20000, "result": [{}]}]})
+    rows = {row["provider"]: row for row in providers.status(check=True)}
+    assert seen == [("/v3/appendix/user_data", None)]
+    assert rows["DataForSEO"]["connection"] == "verified"
+    assert rows["AIsa"]["connection"] == "not_checked"
 
 
 def test_ahrefs_uses_v3_overview_and_normalizes_rows(monkeypatch):

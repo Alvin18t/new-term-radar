@@ -12,7 +12,7 @@ A name ("SynthID Detector") has a short life as a keyword and belongs to someone
 ## Before you run anything
 
 1. Find the radar: `$NEW_TERM_RADAR_DIR` if set, else `~/new-term-radar`; clone https://github.com/zhuyansen/new-term-radar there if missing. Run every command from that directory.
-2. An AIsa key must be available, as `AISA_API_KEY` or from the AIsa CLI (`aisa login` stores it in `~/.aisa`): every lookup here is paid through it. Without it, stop and say so. A key comes from https://go.aisa.one/yansen-zhu.
+2. An AIsa key must be available, as `AISA_API_KEY` or from the AIsa CLI (`aisa login` stores it in `~/.aisa`): it handles evidence extraction and keyword screening. Without it, stop and say so. A key comes from https://go.aisa.one/yansen-zhu. Google Ads, Trends, SERP and KD use direct DataForSEO when `DATAFORSEO_LOGIN` and `DATAFORSEO_PASSWORD` are both set; otherwise they use AIsa. Never ask the user to paste these values into chat.
 3. `GOANYAPI_API_KEY` is optional (a key comes from https://goanyapi.com/r/ga-95708898fb). With it the table also holds what people really searched together with each name, and reads the bigger rows from one country's settled series. Without it, tell the user that a "flat" reading is weaker evidence (see below).
 4. If there is no `config.json`, copy `config.example.json`.
 

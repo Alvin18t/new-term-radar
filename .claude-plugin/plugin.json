@@ -26,6 +26,8 @@
       ],
       "env": {
         "AISA_API_KEY": "${user_config.aisa_api_key}",
+        "DATAFORSEO_LOGIN": "${user_config.dataforseo_login}",
+        "DATAFORSEO_PASSWORD": "${user_config.dataforseo_password}",
         "GOANYAPI_API_KEY": "${user_config.goanyapi_api_key}",
         "RADAR_CONFIG": "${CLAUDE_PLUGIN_ROOT}/config.example.json",
         "RADAR_STATE": "${CLAUDE_PLUGIN_DATA}/state"
@@ -36,7 +38,21 @@
     "aisa_api_key": {
       "type": "string",
       "title": "AIsa API key",
-      "description": "Pays for the radar's lookups: X posts, Google Ads volumes, Google Trends and the model. recent_leads works without it. A key: https://go.aisa.one/yansen-zhu (referral link)",
+      "description": "Handles social discovery, model calls and the fallback search route. recent_leads works without it. A key: https://go.aisa.one/yansen-zhu (referral link)",
+      "sensitive": true,
+      "default": ""
+    },
+    "dataforseo_login": {
+      "type": "string",
+      "title": "DataForSEO API login (optional)",
+      "description": "Optional direct route for Google Trends, Ads volume, SERP, KD, WHOIS and backlinks. Set with the API password.",
+      "sensitive": true,
+      "default": ""
+    },
+    "dataforseo_password": {
+      "type": "string",
+      "title": "DataForSEO API password (optional)",
+      "description": "The API password from DataForSEO API Access, not the dashboard password. Set with the API login.",
       "sensitive": true,
       "default": ""
     },

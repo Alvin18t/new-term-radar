@@ -47,6 +47,14 @@ def key() -> str:
     return _no_key()
 
 
+def configured() -> bool:
+    """Whether a key is available, without exposing its value or making a request."""
+    try:
+        return bool(key())
+    except AisaError:
+        return False
+
+
 def _no_key() -> str:
     raise AisaError("no AIsa key: set AISA_API_KEY, or log in with the AIsa CLI (`aisa login`)")
 

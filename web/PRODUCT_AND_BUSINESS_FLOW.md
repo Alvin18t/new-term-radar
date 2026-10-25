@@ -60,7 +60,7 @@
 
 当前代码对供应商的真实边界：
 
-- DataForSEO 由 AIsa 包装，承担 Trends、Google Ads 搜索量、SERP 和 KD 等查询。
+- DataForSEO 承担 Trends、Google Ads 搜索量、SERP、KD、WHOIS 和 Backlinks 等监控查询：有 `DATAFORSEO_LOGIN` 和 `DATAFORSEO_PASSWORD` 时直连，否则走 AIsa 备用路由。AIsa 另外承担社媒发现与模型提取。
 - GoAnyAPI 承担相关查询、国家日趋势、DR、Intitle、广告主和 traffic 访问量代理。
 - 已增加 Ahrefs Keywords Explorer v3 直连适配器，读取搜索量、KD、CPC、点击、流量潜力、父主题、意图和 SERP 特征。
 - 已增加 Semrush Keyword Metrics v4 直连适配器，读取搜索量、KD、CPC、付费竞争密度、意图、趋势和 SERP 特征。

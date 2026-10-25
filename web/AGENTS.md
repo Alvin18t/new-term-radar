@@ -14,7 +14,7 @@ Before making substantial visual changes, use the Product Design plugin's `get-c
 - Preserve the selected visual target: a quiet light-gray editorial dashboard, thin separators, dense information, and red/orange/yellow as sparse status colors.
 - Demo business data must remain visibly labeled until real radar outputs are connected.
 - Heat is a discovery trigger, not an opportunity verdict. A recommendation must show separate demand, competition, commercial, execution, and personal-fit evidence.
-- Preserve provider provenance and connection state. DataForSEO/AIsa, GoAnyAPI, TrustMRR/payment-link signals, Ahrefs v3, Semrush v4, and Similarweb Batch now have adapters. Show `待凭证` until the matching environment key exists and `已校验` only after a real response.
+- Preserve provider provenance and connection state. Direct DataForSEO handles search monitoring when `DATAFORSEO_LOGIN` and `DATAFORSEO_PASSWORD` exist; otherwise those calls use AIsa, while AIsa remains responsible for discovery and model extraction. GoAnyAPI, TrustMRR/payment-link signals, Ahrefs v3, Semrush v4, and Similarweb Batch have adapters. Show `待凭证` until the matching environment key exists and `已校验` only after a real response.
 - Do not average conflicting provider values into a single opaque number. Store source values separately and route conflicts or missing mandatory evidence to review.
 
 When implementing from a selected generated mock, treat that image as the source of truth for layout, component anatomy, density, spacing, color, typography, visible content, and hierarchy.
