@@ -344,7 +344,7 @@ npx skills add zhuyansen/new-term-radar
 `.github/workflows/radar.yml` 每 8 小时跑一次 `sources`、每天跑一次 `daily`，状态存在 Actions 缓存里，报告写到每次运行的摘要页。默认关闭，需要你主动开启：
 
 1. Fork 这个仓库（私有 fork 也可以）。
-2. 把 `config.json` 从 `.gitignore` 里删掉，提交你的配置。配置里没有任何密钥。
+2. 可选：把 `config.json` 从 `.gitignore` 里删掉并提交你的监控清单；不提交时会自动使用 `config.example.json` 的默认清单。配置文件里不要放密钥。
 3. 添加 secret `AISA_API_KEY`。要直连搜索监控，再添加 `DATAFORSEO_LOGIN` 和 `DATAFORSEO_PASSWORD`；未配时 DataForSEO 调用会继续走 AIsa。可选添加 `GOANYAPI_API_KEY`、`AHREFS_API_KEY`、`SEMRUSH_API_KEY`、`SIMILARWEB_API_KEY`、`RESEND_API_KEY`、`EMAIL_FROM`、`RADAR_EMAIL_TO`、`GSC_TOKEN_JSON`。未配置的供应商会显示「待凭证」。
 4. 把仓库变量 `RADAR_ENABLED` 设为 `true`。
 

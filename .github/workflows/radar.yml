@@ -8,7 +8,7 @@ name: New-term radar
 #
 # Off until you opt in: set the repository variable RADAR_ENABLED to "true"
 # (Settings > Secrets and variables > Actions > Variables), add the secret AISA_API_KEY,
-# and commit your config.json (remove it from .gitignore first; it holds no secrets).
+# A committed config.json is optional; without one the workflow uses config.example.json.
 # Optional direct search route: DATAFORSEO_LOGIN + DATAFORSEO_PASSWORD. Without them,
 # DataForSEO monitoring calls continue through AIsa. Other optional secrets:
 # GOANYAPI_API_KEY (related queries in the keyword table),
@@ -77,10 +77,12 @@ jobs:
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           RADAR_EMAIL_TO: ${{ secrets.RADAR_EMAIL_TO }}
         run: |
+          CONFIG_FILE=config.json
+          if [ ! -f "$CONFIG_FILE" ]; then CONFIG_FILE=config.example.json; fi
           if [ "$COMMAND" = "daily" ]; then
-            python -m radar daily --skip x,hf --out report.md ${RADAR_EMAIL_TO:+--mail}
+            python -m radar daily --config "$CONFIG_FILE" --skip x,hf --out report.md ${RADAR_EMAIL_TO:+--mail}
           else
-            python -m radar sources --out report.md ${RADAR_EMAIL_TO:+--mail}
+            python -m radar sources --config "$CONFIG_FILE" --out report.md ${RADAR_EMAIL_TO:+--mail}
           fi
           if [ -f report.md ]; then cat report.md >> "$GITHUB_STEP_SUMMARY"; fi
 

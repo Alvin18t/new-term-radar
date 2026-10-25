@@ -349,7 +349,7 @@ Point `RADAR_STATE` at the directory your scheduled runs write to and `recent_le
 `.github/workflows/radar.yml` runs `sources` every 8 hours and `daily` once a day, keeps the state in the Actions cache, and writes each report to the run summary. It is off until you opt in:
 
 1. Fork the repository (a private fork is fine).
-2. Remove `config.json` from `.gitignore` and commit your config. It holds no secrets.
+2. Optional: remove `config.json` from `.gitignore` and commit your watch list. Without it, the workflow uses `config.example.json`. Do not put secrets in either file.
 3. Add the secret `AISA_API_KEY`. For direct search monitoring, also add `DATAFORSEO_LOGIN` and `DATAFORSEO_PASSWORD`; if they are absent, DataForSEO calls use AIsa. Optionally add `GOANYAPI_API_KEY`, `AHREFS_API_KEY`, `SEMRUSH_API_KEY`, `SIMILARWEB_API_KEY`, `RESEND_API_KEY`, `EMAIL_FROM`, `RADAR_EMAIL_TO`, `GSC_TOKEN_JSON`. Providers without credentials remain marked as pending credentials.
 4. Set the repository variable `RADAR_ENABLED` to `true`.
 
