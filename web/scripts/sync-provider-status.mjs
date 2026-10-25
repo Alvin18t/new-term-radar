@@ -5,18 +5,20 @@ import { fileURLToPath } from "node:url";
 const repositoryRoot = fileURLToPath(new URL("../..", import.meta.url));
 const radarModule = fileURLToPath(new URL("../../radar/__init__.py", import.meta.url));
 const target = fileURLToPath(new URL("../public/provider-status.json", import.meta.url));
+const fallback = fileURLToPath(new URL("../public/provider-status.default.json", import.meta.url));
 
 if (!existsSync(radarModule)) {
-  if (!existsSync(target)) {
-    throw new Error("Could not find the checked-in provider status snapshot.");
+  if (!existsSync(target) && !existsSync(fallback)) {
+    throw new Error("Could not find the default provider status snapshot.");
   }
 
-  const snapshot = JSON.parse(readFileSync(target, "utf8"));
+  const snapshot = JSON.parse(readFileSync(existsSync(target) ? target : fallback, "utf8"));
   if (!Array.isArray(snapshot.providers)) {
-    throw new Error("The checked-in provider status snapshot is invalid.");
+    throw new Error("The default provider status snapshot is invalid.");
   }
 
-  console.log(`Using ${snapshot.providers.length} checked-in provider states`);
+  writeFileSync(target, `${JSON.stringify(snapshot, null, 2)}\n`);
+  console.log(`Using ${snapshot.providers.length} default provider states`);
   process.exit(0);
 }
 

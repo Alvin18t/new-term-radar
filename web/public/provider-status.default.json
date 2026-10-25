@@ -1,0 +1,59 @@
+{
+  "providers": [
+    {
+      "provider": "DataForSEO",
+      "adapter": "ready",
+      "credential": "missing",
+      "env": "DATAFORSEO_LOGIN + DATAFORSEO_PASSWORD",
+      "capabilities": "Trends, Ads volume, SERP, KD, WHOIS, backlinks",
+      "role": "search_monitoring",
+      "route": "unavailable",
+      "connection": "not_checked",
+      "detail": "run providers --check to verify"
+    },
+    {
+      "provider": "AIsa",
+      "adapter": "ready",
+      "credential": "missing",
+      "env": "AISA_API_KEY",
+      "capabilities": "social discovery, evidence extraction, model calls, DataForSEO fallback",
+      "role": "discovery_and_ai",
+      "route": "unavailable",
+      "connection": "not_checked",
+      "detail": "configured state only; no paid probe is sent"
+    },
+    {
+      "provider": "Ahrefs",
+      "adapter": "ready",
+      "credential": "missing",
+      "env": "AHREFS_API_KEY",
+      "capabilities": "keyword metrics, traffic potential, parent topic",
+      "role": "cross_check",
+      "route": "direct",
+      "connection": "not_checked",
+      "detail": "configured state only"
+    },
+    {
+      "provider": "Semrush",
+      "adapter": "ready",
+      "credential": "missing",
+      "env": "SEMRUSH_API_KEY",
+      "capabilities": "volume, KD, CPC, paid density, intent, SERP features",
+      "role": "cross_check",
+      "route": "direct",
+      "connection": "not_checked",
+      "detail": "configured state only"
+    },
+    {
+      "provider": "Similarweb",
+      "adapter": "ready",
+      "credential": "missing",
+      "env": "SIMILARWEB_API_KEY",
+      "capabilities": "page-one domain traffic and engagement",
+      "role": "cross_check",
+      "route": "direct",
+      "connection": "not_checked",
+      "detail": "configured state only"
+    }
+  ]
+}
