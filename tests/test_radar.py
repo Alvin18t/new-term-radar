@@ -889,6 +889,19 @@ def test_page_one_verdicts():
     assert competition.page_kind("headshots.com", "https://headshots.com/best", "16 Best AI Headshot Generators") == "list"
 
 
+def test_live_sites_keep_safe_unique_addresses_and_recent_metadata():
+    rows = [
+        {"domain": "www.tool.test", "url": "https://tool.test/app", "title": "Free AI Tool", "position": 1, "kind": "tool", "dr": 12},
+        {"domain": "tool.test", "url": "https://tool.test/pricing", "title": "Pricing", "position": 2, "kind": "tool", "dr": 12},
+        {"domain": "youtube.com", "url": "https://youtube.com/watch?v=1", "title": "Demo", "position": 3, "kind": "video", "dr": 99},
+        {"domain": "bad.test", "url": "javascript:alert(1)", "title": "Bad", "position": 4, "kind": "tool", "dr": 1},
+    ]
+    found = competition.live_sites(rows, [{"domain": "tool.test", "created": "2026-10-20", "first_seen": "2026-10-21", "etv": 1200, "keywords": 31}])
+    assert found == [{"domain": "tool.test", "url": "https://tool.test/app", "title": "Free AI Tool", "position": 1,
+                      "kind": "tool", "dr": 12, "candidate_competitor": True,
+                      "recent": {"created": "2026-10-20", "first_seen": "2026-10-21", "etv": 1200, "keywords": 31}}]
+
+
 def test_a_crowded_rising_term_is_watched_not_prioritized(cfg, tmp_path, monkeypatch):
     cfg["competition"]["max_rows"] = 8
     monkeypatch.setenv("GOANYAPI_API_KEY", "k")
@@ -918,12 +931,14 @@ def test_a_crowded_rising_term_is_watched_not_prioritized(cfg, tmp_path, monkeyp
     monkeypatch.setattr(competition.goanyapi, "call", goany)
     rows = [{"phrase": "crowded term", "decision": "prioritize"}, {"phrase": "open term", "decision": "prioritize"},
             {"phrase": "faded", "decision": "skip"}]
-    cost, errors = competition.assess(rows, cfg, tmp_path)
+    cost, errors = competition.assess(rows, cfg, tmp_path, [{"domain": "tiny1.ai", "created": "2026-10-20"}])
     crowded, opened, faded = rows
     assert crowded["decision"] == "watch" and crowded["demoted"] and crowded["competition"]["ads"]
     assert crowded["competition"]["verdict"] == "crowded" and crowded["competition"]["weak"] == 0
     assert opened["decision"] == "prioritize" and opened["competition"]["weak"] == 3
     assert opened["competition"]["weakest"] == {"domain": "tiny1.ai", "dr": 8, "position": 3, "url": "https://tiny1.ai/"}
+    assert [s["url"] for s in opened["competition"]["live_sites"]] == ["https://canva.com/ai", "https://adobe.com/x", "https://tiny1.ai/", "https://tiny2.ai/", "https://tiny3.ai/x"]
+    assert opened["competition"]["live_sites"][2]["recent"]["created"] == "2026-10-20"
     assert "competition" not in faded and errors == [] and cost == 2 * 2000 + 12000 + 5 * 2000 + 2 * (4000 + 4000)
     assert crowded["competition"]["built"] == 19500 and crowded["competition"]["paid"] == ["paid.example"]
     competition.assess([{"phrase": "open term", "decision": "watch"}], cfg, tmp_path)

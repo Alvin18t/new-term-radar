@@ -25,6 +25,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from . import dataforseo, goanyapi, snap
 
@@ -61,6 +62,36 @@ def page_one(keyword: str, location: int) -> tuple[dict, int]:
         r["kind"] = page_kind(r["domain"], r["url"], r["title"])
     return {"results": results, "ads": any(i.get("type") == "paid" for i in items),
             "features": sorted({i["type"] for i in items if i.get("type") not in ("organic", "paid")})}, cost
+
+
+def live_sites(results: list[dict], recent_sites: list[dict] | None = None, limit: int = 5) -> list[dict]:
+    """Unique, safe page-one URLs that show a related site is already live.
+
+    Video and forum results remain part of the page-kind counts but are not presented as
+    competitor sites. A tool-looking result is only a candidate competitor; the SERP does
+    not prove that two products serve the same customer or business model.
+    """
+    recent = {str(row.get("domain") or "").lower().removeprefix("www."): row for row in (recent_sites or [])}
+    out, seen = [], set()
+    for row in results:
+        try:
+            parsed = urlsplit(str(row.get("url") or ""))
+        except ValueError:
+            continue
+        domain = (parsed.hostname or "").lower().removeprefix("www.")
+        if parsed.scheme not in {"http", "https"} or not domain or domain in seen or row.get("kind") in {"video", "forum"}:
+            continue
+        seen.add(domain)
+        item = {"domain": domain, "url": parsed.geturl(), "title": " ".join(str(row.get("title") or "").split())[:160],
+                "position": row.get("position"), "kind": row.get("kind") or "article", "dr": row.get("dr"),
+                "candidate_competitor": row.get("kind") == "tool"}
+        if domain in recent:
+            match = recent[domain]
+            item["recent"] = {k: match.get(k) for k in ("created", "first_seen", "etv", "keywords")}
+        out.append(item)
+        if len(out) >= limit:
+            break
+    return out
 
 
 def difficulty(keywords: list[str], location: int) -> tuple[dict[str, int | None], int]:
@@ -123,7 +154,7 @@ def verdict(weak: int | None, kd: int | None) -> str:
     return "mixed"
 
 
-def assess(rows: list[dict], cfg: dict, state: Path) -> tuple[int, list[str]]:
+def assess(rows: list[dict], cfg: dict, state: Path, recent_sites: list[dict] | None = None) -> tuple[int, list[str]]:
     """Adds `competition` to the rows that would be acted on and demotes a crowded prioritize. (cost, errors)"""
     c = cfg["competition"]
     picked = [r for r in rows if r.get("decision") == "prioritize"] + [r for r in rows if r.get("decision") == "watch"]
@@ -160,6 +191,8 @@ def assess(rows: list[dict], cfg: dict, state: Path) -> tuple[int, list[str]]:
         r["competition"] = {"verdict": verdict(weak, kd), "weak": weak, "kd": kd, "ads": p["ads"],
                             "kinds": kinds, "features": p["features"],
                             "domains": [x["domain"] for x in rated if x["domain"]],
+                            "live_sites": live_sites(rated, recent_sites), "sites_checked_on": date.today().isoformat(),
+                            "sites_source": "DataForSEO SERP",
                             "weakest": {k: weakest[k] for k in ("domain", "dr", "position", "url")} if weakest else None}
         if r["decision"] == "prioritize" and r["competition"]["verdict"] == "crowded":
             r["decision"], r["demoted"] = "watch", True

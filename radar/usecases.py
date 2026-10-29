@@ -470,7 +470,8 @@ def measure(rows: list[dict], series: dict[str, dict], min_daily: int, today: da
 
 
 def run(cfg: dict, state: Path, names: list[str], repos: dict[str, str], today: date | None = None,
-        on_request: bool = False, texts: dict[str, tuple[str, str]] | None = None) -> dict:
+        on_request: bool = False, texts: dict[str, tuple[str, str]] | None = None,
+        recent_sites: list[dict] | None = None) -> dict:
     """names: today's named leads, most important first. repos: {name: "owner/repo"} where known.
     `on_request` is for names a person asked about (the `keywords` command, the MCP tool): all of
     them are read now, up to ASKED_MAX, and the read-twice record is left alone."""
@@ -517,7 +518,7 @@ def run(cfg: dict, state: Path, names: list[str], repos: dict[str, str], today: 
     series, c3 = fetch_series([r["phrase"] for r in rows], bench, today)
     local, c4, local_errors = country_series(rows, c) if goanyapi.key() and c.get("country_trends", True) else ({}, 0, [])
     daily = measure(rows, series, c["min_daily"], today, local)
-    c5, comp_errors = competition.assess(rows, cfg, state) if cfg.get("competition", {}).get("max_rows") else (0, [])
+    c5, comp_errors = competition.assess(rows, cfg, state, recent_sites) if cfg.get("competition", {}).get("max_rows") else (0, [])
     provider_queries, provider_errors = providers.enrich(rows, cfg, state, today) if cfg.get("competition", {}).get("max_rows") else (0, [])
     order = {"prioritize": 0, "watch": 1, "skip": 2}
     rows.sort(key=lambda r: (order[r["decision"]], -(r.get("per_day") or 0), -(r.get("volume") or 0)))

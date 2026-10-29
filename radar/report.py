@@ -343,6 +343,15 @@ def _page_one_lines(cfg: dict, uc: dict) -> list[str]:
             lines.append(t(key, phrase=r["phrase"], domain=w["domain"], dr=w["dr"], pos=w["position"],
                            kinds=", ".join(f"{t('pk_' + k)} {n}" for k, n in sorted(kinds.items(), key=lambda x: -x[1])))
                          + (t("pc_paid_who", who=", ".join(r["competition"]["paid"][:3])) if r["competition"].get("paid") else ""))
+    live = [(r, site) for r in rows for site in r["competition"].get("live_sites", [])]
+    if live:
+        lines += ["", t("pc_live_h")]
+        for r, site in live:
+            recent = site.get("recent") or {}
+            lines.append(t("pc_live_site", phrase=r["phrase"], domain=site["domain"], url=site["url"],
+                           pos=site.get("position") or "?", kind=t("pk_" + site["kind"]),
+                           relation=t("pc_candidate" if site.get("candidate_competitor") else "pc_related"),
+                           recent=t("pc_recent", date=recent["created"]) if recent.get("created") else ""))
     if uc.get("competition_errors"):
         lines.append(t("pc_err", names="; ".join(uc["competition_errors"])))
     return lines

@@ -52,7 +52,7 @@
 |---|---|---|---|
 | 发现 | X、Hugging Face、GitHub、Sitemap、新站、Reddit | 找到候选词和首次出现时间 | 只进入候选池 |
 | 需求 | Google Trends；Google Ads 搜索量 | 验证增长是否持续、规模是否足够 | 新词可暂缺完整量级，但趋势与重复需求不能同时缺失 |
-| 竞争 | Google SERP、KD、首页弱结果 | 判断页面类型、强弱结果和切入口 | 必须完成，缺失时不能标记“建议做” |
+| 竞争 | Google SERP、KD、首页弱结果、真实结果 URL | 判断页面类型、强弱结果、已上线相关站点和候选竞品地址 | 必须完成，缺失时不能标记“建议做” |
 | 站点强度 | GoAnyAPI DR；traffic 访问量代理 | 评估首页域名与候选站点强度 | 允许部分缺失，但必须降低置信度 |
 | 供给与广告 | Intitle 新增页面、Ads Transparency 广告主 | 判断供给增速和付费获客证据 | 与商业证据至少有一组可用 |
 | 商业 | TrustMRR、公开收款链接与卖家网络 | 验证是否有人正在收钱 | “高净值”必须有可追溯商业证据 |
@@ -61,6 +61,7 @@
 当前代码对供应商的真实边界：
 
 - DataForSEO 承担 Trends、Google Ads 搜索量、SERP、KD、WHOIS 和 Backlinks 等监控查询：有 `DATAFORSEO_LOGIN` 和 `DATAFORSEO_PASSWORD` 时直连，否则走 AIsa 备用路由。AIsa 另外承担社媒发现与模型提取。
+- 同一次 SERP 查询保存最多 5 个可访问的非论坛、非视频结果 URL，不增加请求次数；工具页标记为“候选竞品”，其他结果保留为“相关页面”。与本周 WHOIS 新站结果命中时，再附注册与首次收录时间。
 - GoAnyAPI 承担相关查询、国家日趋势、DR、Intitle、广告主和 traffic 访问量代理。
 - 已增加 Ahrefs Keywords Explorer v3 直连适配器，读取搜索量、KD、CPC、点击、流量潜力、父主题、意图和 SERP 特征。
 - 已增加 Semrush Keyword Metrics v4 直连适配器，读取搜索量、KD、CPC、付费竞争密度、意图、趋势和 SERP 特征。
@@ -86,7 +87,7 @@
 | `radar/sources.py`、`breakout.py`、`sitemaps.py`、`new_sites.py` | 新词和热度信号 | 证据、首次出现、来源健康 |
 | `asks.py`、`revenue.py`、`sellers.py` | 需求和商业信号 | 需求强度、付费证据、高净值候选 |
 | `judge.py`、`opportunity.py`、`usecases.py` | 名称判断、格式、用例、规模和初步决策 | 词详情、格式、建议与解释 |
-| `competition.py` | SERP、弱结果、KD、页面类型和广告 | 竞争卡与可切入角度 |
+| `competition.py` | SERP、弱结果、KD、页面类型、广告和已上线站点 URL | 竞争卡、候选竞品地址与可切入角度 |
 | `store.py` | 线索、复核结果、近期来源 | 历史证据与命中统计 |
 | `review.py` | 14 天趋势复核 | 复盘队列、命中率与领先天数 |
 | `mcp_server.py` | agent 读取最新线索并触发命令 | 未来服务层接口之一 |
@@ -98,6 +99,7 @@
 - `keyword_opportunities`：标准词、类型、评分和系统标签。
 - `evidence_events`：来源、URL、抓取时间、原文摘要和可信度。
 - `user_decisions`：决定、原因、时间和历史版本。
+- `market_sites`：关键词、域名、实际页面 URL、SERP 排名、页面类型、候选竞品标记和首次检测时间。
 - `sites`、`site_pages`、`keyword_page_links`：站点、页面和覆盖关系。
 - `channels`、`keyword_channel_plans`、`distribution_events`：渠道规则、内容方向和发布结果。
 - `outcome_snapshots`：排名、点击、注册、激活、付费与留存。

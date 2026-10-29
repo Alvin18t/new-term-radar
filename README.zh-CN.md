@@ -189,7 +189,7 @@ python -m radar history --out sellers.csv
 
 ## 核心数据源和可选交叉校验源
 
-[AIsa](https://go.aisa.one/yansen-zhu) 负责社媒发现，以及判断名字、提取用途的模型调用。搜索监控有两种 DataForSEO 路由：配置 `DATAFORSEO_LOGIN` 和 `DATAFORSEO_PASSWORD` 后，Trends、Google Ads 搜索量、SERP、KD、WHOIS 和 Backlinks 直连 DataForSEO；不配时继续经 AIsa 代理。`DATAFORSEO_MODE=auto` 是默认值，`direct` 强制直连，`aisa` 强制代理。直连失败后不会自动再发给 AIsa，避免同一个任务重复计费。
+[AIsa](https://go.aisa.one/yansen-zhu) 负责社媒发现，以及判断名字、提取用途的模型调用。搜索监控有两种 DataForSEO 路由：配置 `DATAFORSEO_LOGIN` 和 `DATAFORSEO_PASSWORD` 后，Trends、Google Ads 搜索量、SERP、KD、WHOIS 和 Backlinks 直连 DataForSEO；不配时继续经 AIsa 代理。`DATAFORSEO_MODE=auto` 是默认值，`direct` 强制直连，`aisa` 强制代理。直连失败后不会自动再发给 AIsa，避免同一个任务重复计费。每次首页竞争查询还会保留前五个非论坛、非视频结果的实际 URL，回答“是否已有相关站点上线”；其中工具型页面只标为候选竞品，不能仅凭一次 SERP 就断言是直接竞品。若域名同时出现在本周新站数据里，会附带注册与首次收录时间。
 
 > 上面是推荐链接：通过它注册是对这个项目的支持。从 aisa.one 任何入口拿到的 key 用起来完全一样。
 

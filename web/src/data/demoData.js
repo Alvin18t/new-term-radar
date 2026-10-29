@@ -66,6 +66,9 @@ export const initialKeywords = [
       { name: "X / Twitter", angle: "30 秒演示：同一提示词的速度与成本", state: "可尝试" },
     ],
     linkedSites: [],
+    liveSites: [
+      { domain: "huggingface.co", url: "https://huggingface.co/MiniMaxAI", title: "MiniMaxAI 模型入口", relation: "官方入口", kind: "模型页", position: 2 },
+    ],
     nextAction: "今天完成需求页与可点击 Demo，24 小时后复查 SERP。",
   },
   {
@@ -99,6 +102,10 @@ export const initialKeywords = [
       { name: "Reddit r/sales", angle: "分享不上传录音的工作流", state: "候选" },
     ],
     linkedSites: ["flowmemo.app"],
+    liveSites: [
+      { domain: "otter.ai", url: "https://otter.ai/", title: "Otter Meeting Agent", relation: "候选竞品", kind: "工具", position: 1 },
+      { domain: "fireflies.ai", url: "https://fireflies.ai/", title: "Fireflies AI Meeting Assistant", relation: "候选竞品", kind: "工具", position: 3 },
+    ],
     nextAction: "访谈 5 位跨境销售，验证是否愿意为双语行动项付费。",
   },
   {
@@ -130,6 +137,10 @@ export const initialKeywords = [
       { name: "X / Twitter", angle: "记录首次性能测试", state: "候选" },
     ],
     linkedSites: [],
+    liveSites: [
+      { domain: "github.com/vllm-project/vllm", url: "https://github.com/vllm-project/vllm", title: "vLLM", relation: "候选竞品", kind: "开源框架", position: 2 },
+      { domain: "github.com/sgl-project/sglang", url: "https://github.com/sgl-project/sglang", title: "SGLang", relation: "候选竞品", kind: "开源框架", position: 4 },
+    ],
     nextAction: "6 小时后自动复查增长、README 用例和第三方讨论。",
   },
   {
@@ -163,6 +174,7 @@ export const initialKeywords = [
       { name: "Indie Hackers", angle: "公开首批付费验证过程", state: "候选" },
     ],
     linkedSites: ["clipnest.tools"],
+    liveSites: [],
     nextAction: "邀请 10 位短视频创作者上传样片，观察完成率与导出意愿。",
   },
   {
@@ -195,6 +207,7 @@ export const initialKeywords = [
       { name: "YouTube", angle: "从图片到可用模型的完整测试", state: "可尝试" },
     ],
     linkedSites: [],
+    liveSites: [],
     nextAction: "暂缓建站，先发布一篇工作流验证内容并收集点击。",
   },
   {
@@ -227,6 +240,7 @@ export const initialKeywords = [
       { name: "Quizlet 社区", angle: "发布样例卡组并引导导入", state: "候选" },
     ],
     linkedSites: ["studypulse.cc"],
+    liveSites: [],
     nextAction: "先做医学生访谈页，验证上传教材后的首个成功时刻。",
   },
 ];
